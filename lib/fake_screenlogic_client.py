@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from lib.model import FeatureState, PoolState
+from lib.model import EquipmentProfile, FeatureState, PoolState
 from lib.screenlogic_client import ScreenLogicClient
 
 
@@ -79,7 +79,7 @@ class FakeScreenLogicClient(ScreenLogicClient):
         return self.state
 
     def get_features(self) -> tuple[FeatureState, ...]:
-        return tuple(self.features.values())
+        return ()
 
     def set_feature(self, circuit_id: int, enabled: bool) -> PoolState:
         feature = self.features[int(circuit_id)]
@@ -92,3 +92,20 @@ class FakeScreenLogicClient(ScreenLogicClient):
             is_light=feature.is_light,
         )
         return self.state
+
+    def get_equipment_profile(self) -> EquipmentProfile | None:
+        return EquipmentProfile(
+            firmware="FAKE: Simulated Pool Controller",
+            controller_type="fake",
+            hardware_type="fake",
+            equipment_flags=0,
+            body_names=("Pool", "Spa"),
+            feature_names=tuple(
+                feature.name for feature in self.features.values() if not feature.is_light
+            ),
+            light_names=tuple(
+                feature.name for feature in self.features.values() if feature.is_light
+            ),
+            has_solar=True,
+            intelliflo_pump_count=1,
+        )

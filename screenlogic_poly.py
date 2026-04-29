@@ -112,11 +112,13 @@ class ScreenLogicNodeServer:
             self.client.connect()
         except Exception:
             LOGGER.exception("Backend client connect failed during parameter refresh")
+        self._update_equipment_notices()
         self.controller.refresh_children()
 
     def _update_notices(self):
         if self.config.use_fake_backend:
             self._remove_notice("screenlogic_target")
+            self._clear_equipment_notices()
             self._add_notice(
                 {
                     "backend_mode": (
@@ -138,6 +140,7 @@ class ScreenLogicNodeServer:
                 )
             else:
                 self._remove_notice("screenlogic_target")
+                self._update_equipment_notices()
 
     def _remove_notice(self, key):
         remove_notice = getattr(self.polyglot, "removeNotice", None)
@@ -148,6 +151,60 @@ class ScreenLogicNodeServer:
         add_notice = getattr(self.polyglot, "addNotice", None)
         if callable(add_notice):
             add_notice(notice)
+
+    def _clear_equipment_notices(self):
+        for key in (
+            "screenlogic_profile",
+            "screenlogic_capabilities",
+            "screenlogic_features",
+        ):
+            self._remove_notice(key)
+
+    def _update_equipment_notices(self):
+        if self.client is None or self.config.use_fake_backend:
+            self._clear_equipment_notices()
+            return
+
+        profile = self.client.get_equipment_profile()
+        if profile is None:
+            self._clear_equipment_notices()
+            return
+
+        bodies = ", ".join(profile.body_names) if profile.body_names else "<none>"
+        features = ", ".join(profile.feature_names[:6]) if profile.feature_names else "<none>"
+        if len(profile.feature_names) > 6:
+            features += f", +{len(profile.feature_names) - 6} more"
+        lights = len(profile.light_names)
+
+        self._add_notice(
+            {
+                "screenlogic_profile": (
+                    "Detected ScreenLogic controller: "
+                    f"firmware={profile.firmware or '<unknown>'} "
+                    f"controller_type={profile.controller_type} "
+                    f"hardware_type={profile.hardware_type} "
+                    f"bodies={bodies}"
+                )
+            }
+        )
+        self._add_notice(
+            {
+                "screenlogic_capabilities": (
+                    "Capabilities: "
+                    f"solar={profile.has_solar} cooling={profile.has_cooling} "
+                    f"chlorinator={profile.has_chlorinator} chemistry={profile.has_chemistry} "
+                    f"hybrid_heater={profile.has_hybrid_heater} "
+                    f"intelliflo_pumps={profile.intelliflo_pump_count} lights={lights}"
+                )
+            }
+        )
+        self._add_notice(
+            {
+                "screenlogic_features": (
+                    f"Features/circuits ({len(profile.feature_names)} non-light): {features}"
+                )
+            }
+        )
 
     def start(self):
         LOGGER.info("Starting ScreenLogic PG3x node server")
@@ -173,6 +230,7 @@ class ScreenLogicNodeServer:
         )
         self.polyglot.addNode(self.controller)
         self.controller.start()
+        self._update_equipment_notices()
         self._start_diagnostics_if_enabled()
         self.polyglot.runForever()
 

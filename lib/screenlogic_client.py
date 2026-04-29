@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from lib.model import FeatureState, PoolState
+from lib.model import EquipmentProfile, FeatureState, PoolState
 
 
 class ScreenLogicClient(ABC):
@@ -51,3 +51,6 @@ class ScreenLogicClient(ABC):
 
     def set_feature(self, circuit_id: int, enabled: bool) -> PoolState:
         raise RuntimeError("This ScreenLogic backend does not support feature commands.")
+
+    def get_equipment_profile(self) -> EquipmentProfile | None:
+        return None

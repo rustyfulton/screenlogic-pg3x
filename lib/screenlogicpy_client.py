@@ -3,15 +3,31 @@ from __future__ import annotations
 import asyncio
 import threading
 import time
+from dataclasses import dataclass, field
 from typing import Any, Callable
 
 import udi_interface
 
-from lib.model import FeatureState, PoolState
+from lib.model import EquipmentProfile, FeatureState, PoolState
 from lib.screenlogic_client import ScreenLogicClient
 from lib.screenlogic_protocol import build_local_login_payload
 
 LOGGER = udi_interface.LOGGER
+
+
+@dataclass
+class _CommandToken:
+    event: threading.Event = field(default_factory=threading.Event)
+    result: PoolState | None = None
+    error: Exception | None = None
+
+
+@dataclass
+class _QueuedCommand:
+    write_key: str
+    description: str
+    operation: Callable[[Any], Any]
+    tokens: list[_CommandToken] = field(default_factory=list)
 
 
 class ScreenLogicPyClient(ScreenLogicClient):
@@ -40,6 +56,15 @@ class ScreenLogicPyClient(ScreenLogicClient):
         self._last_command_at = 0.0
         self._last_feature_config_summary: tuple[tuple[Any, ...], ...] = ()
         self._light_function_values: set[int] | None = None
+        self._equipment_profile: EquipmentProfile | None = None
+        self._command_condition = threading.Condition()
+        self._command_queue: list[_QueuedCommand] = []
+        self._command_worker = threading.Thread(
+            target=self._command_worker_loop,
+            name="screenlogic_command_queue",
+            daemon=True,
+        )
+        self._command_worker.start()
 
     def connect(self) -> bool:
         with self._lock:
@@ -56,11 +81,20 @@ class ScreenLogicPyClient(ScreenLogicClient):
             self._refresh_state()
             return tuple(self._extract_features(self._last_data))
 
+    def get_equipment_profile(self) -> EquipmentProfile | None:
+        with self._lock:
+            if not self._equipment_profile and self.host:
+                self._refresh_state()
+            return self._equipment_profile
+
     def set_feature(self, circuit_id: int, enabled: bool) -> PoolState:
         state_text = "on" if enabled else "off"
-        return self._run_write(
-            f"set feature circuit {int(circuit_id)} {state_text}",
-            lambda gateway: gateway.async_set_circuit(int(circuit_id), 1 if enabled else 0),
+        return self._enqueue_write(
+            write_key=f"feature:{int(circuit_id)}",
+            description=f"set feature circuit {int(circuit_id)} {state_text}",
+            operation=lambda gateway: gateway.async_set_circuit(
+                int(circuit_id), 1 if enabled else 0
+            ),
         )
 
     def set_pump(self, enabled: bool) -> PoolState:
@@ -75,16 +109,20 @@ class ScreenLogicPyClient(ScreenLogicClient):
         return self.set_feature(circuit_id, enabled)
 
     def set_heater(self, enabled: bool) -> PoolState:
-        return self._run_write(
-            f"set pool heater {'on' if enabled else 'off'}",
-            lambda gateway: gateway.async_set_heat_mode(0, 3 if enabled else 0),
+        return self._enqueue_write(
+            write_key="body:0:heat_mode",
+            description=f"set pool heater {'on' if enabled else 'off'}",
+            operation=lambda gateway: gateway.async_set_heat_mode(
+                0, 3 if enabled else 0
+            ),
         )
 
     def set_pool_setpoint(self, value: int) -> PoolState:
         setpoint = int(value)
-        return self._run_write(
-            f"set pool heat setpoint {setpoint}",
-            lambda gateway: gateway.async_set_heat_temp(0, setpoint),
+        return self._enqueue_write(
+            write_key="body:0:heat_temp",
+            description=f"set pool heat setpoint {setpoint}",
+            operation=lambda gateway: gateway.async_set_heat_temp(0, setpoint),
         )
 
     def set_solar_enabled(self, enabled: bool) -> PoolState:
@@ -103,9 +141,10 @@ class ScreenLogicPyClient(ScreenLogicClient):
 
     def set_solar_mode(self, value: int) -> PoolState:
         mode = int(value)
-        return self._run_write(
-            f"set pool heat mode {mode}",
-            lambda gateway: gateway.async_set_heat_mode(0, mode),
+        return self._enqueue_write(
+            write_key="body:0:heat_mode",
+            description=f"set pool heat mode {mode}",
+            operation=lambda gateway: gateway.async_set_heat_mode(0, mode),
         )
 
     def set_solar_fan_mode(self, value: int) -> PoolState:
@@ -137,6 +176,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             self._last_refresh_at = time.monotonic()
             self._apply_data_to_state(self._last_data)
             self.state.connected = True
+            self._equipment_profile = self._build_equipment_profile(self._last_data)
             self._log_configuration_digest(self._last_data)
             self._log_state_digest(self._last_data)
         except Exception as exc:
@@ -148,30 +188,49 @@ class ScreenLogicPyClient(ScreenLogicClient):
             )
             self.state.connected = False
 
-    def _run_write(
+    def _enqueue_write(
         self,
+        *,
+        write_key: str,
         description: str,
         operation: Callable[[Any], Any],
     ) -> PoolState:
         self._ensure_write_allowed()
-        with self._lock:
-            self._wait_for_command_slot(description)
-            LOGGER.info("ScreenLogic command requested: %s", description)
-            try:
-                self._last_data = asyncio.run(
-                    self._async_with_gateway(operation=operation, update_before=False)
+        token = _CommandToken()
+        with self._command_condition:
+            queued = self._find_queued_command(write_key)
+            if queued is not None:
+                queued.description = description
+                queued.operation = operation
+                queued.tokens.append(token)
+                LOGGER.info(
+                    "ScreenLogic command coalesced: key=%s latest=%s waiters=%s",
+                    write_key,
+                    description,
+                    len(queued.tokens),
                 )
-                self._last_command_at = time.monotonic()
-                self._last_refresh_at = self._last_command_at
-                self._apply_data_to_state(self._last_data)
-                self.state.connected = True
-                self._log_state_digest(self._last_data)
-                LOGGER.info("ScreenLogic command completed: %s", description)
-                return self.state
-            except Exception as exc:
-                self._last_command_at = time.monotonic()
-                LOGGER.warning("ScreenLogic command failed: %s: %s", description, exc)
-                raise
+            else:
+                self._command_queue.append(
+                    _QueuedCommand(
+                        write_key=write_key,
+                        description=description,
+                        operation=operation,
+                        tokens=[token],
+                    )
+                )
+                LOGGER.info(
+                    "ScreenLogic command queued: key=%s description=%s queue_depth=%s",
+                    write_key,
+                    description,
+                    len(self._command_queue),
+                )
+            self._command_condition.notify()
+
+        token.event.wait()
+        if token.error is not None:
+            raise token.error
+        assert token.result is not None
+        return token.result
 
     async def _async_fetch_data(self) -> dict[str, Any]:
         return await self._async_with_gateway()
@@ -214,7 +273,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             if gateway.is_connected:
                 try:
                     await gateway.async_disconnect()
-                except Exception as exc:  # pragma: no cover - best-effort cleanup
+                except Exception as exc:  # pragma: no cover
                     LOGGER.debug("Ignoring ScreenLogic disconnect cleanup error: %s", exc)
 
     def _apply_data_to_state(self, data: dict[str, Any]) -> None:
@@ -258,7 +317,9 @@ class ScreenLogicPyClient(ScreenLogicClient):
     def _extract_features(self, data: dict[str, Any]) -> list[FeatureState]:
         features: list[FeatureState] = []
         circuits = data.get("circuit", {}) or {}
-        for raw_circuit_id, circuit in sorted(circuits.items(), key=lambda item: int(item[0])):
+        for raw_circuit_id, circuit in sorted(
+            circuits.items(), key=lambda item: int(item[0])
+        ):
             circuit_id = int(raw_circuit_id)
             name = str(circuit.get("name") or f"Circuit {circuit_id}").strip()
             value = self._nested_value(circuit, "value")
@@ -276,6 +337,34 @@ class ScreenLogicPyClient(ScreenLogicClient):
             )
         return features
 
+    def _build_equipment_profile(self, data: dict[str, Any]) -> EquipmentProfile:
+        controller = data.get("controller", {})
+        configuration = controller.get("configuration", {})
+        equipment_flags = int(controller.get("equipment", {}).get("flags", 0) or 0)
+        bodies = data.get("body", {}) or {}
+        features = self._extract_features(data)
+        body_names = tuple(self._body_name(index) for index in sorted(bodies.keys()))
+        feature_names = tuple(feature.name for feature in features if not feature.is_light)
+        light_names = tuple(feature.name for feature in features if feature.is_light)
+        return EquipmentProfile(
+            firmware=str(
+                self._nested_value(data.get("adapter", {}).get("firmware", {}), "value")
+                or ""
+            ),
+            controller_type=configuration.get("controller_type"),
+            hardware_type=configuration.get("hardware_type"),
+            equipment_flags=equipment_flags,
+            body_names=body_names,
+            feature_names=feature_names,
+            light_names=light_names,
+            has_solar=bool(equipment_flags & 0x1),
+            has_cooling=bool(equipment_flags & 0x10000),
+            has_chlorinator=bool(equipment_flags & 0x20),
+            has_chemistry=bool(equipment_flags & 0x80),
+            has_hybrid_heater=bool(equipment_flags & 0x20000),
+            intelliflo_pump_count=self._count_intelliflo_flags(equipment_flags),
+        )
+
     def _log_configuration_digest(self, data: dict[str, Any]) -> None:
         features = self._extract_features(data)
         summary = tuple(
@@ -292,20 +381,23 @@ class ScreenLogicPyClient(ScreenLogicClient):
             return
 
         self._last_feature_config_summary = summary
-        adapter = data.get("adapter", {})
-        firmware = self._nested_value(adapter.get("firmware", {}), "value")
-        controller = data.get("controller", {})
-        configuration = controller.get("configuration", {})
-        equipment_flags = int(controller.get("equipment", {}).get("flags", 0) or 0)
+        profile = self._equipment_profile or self._build_equipment_profile(data)
         LOGGER.info(
             "ScreenLogic configuration: firmware=%s controller_type=%s hardware_type=%s "
-            "equipment_flags=0x%X bodies=%s circuits=%s",
-            firmware or "<unknown>",
-            configuration.get("controller_type", "<unknown>"),
-            configuration.get("hardware_type", "<unknown>"),
-            equipment_flags,
-            len(data.get("body", {}) or {}),
+            "equipment_flags=0x%X bodies=%s circuits=%s solar=%s cooling=%s "
+            "chlorinator=%s chemistry=%s hybrid_heater=%s intelliflo_pumps=%s",
+            profile.firmware or "<unknown>",
+            profile.controller_type if profile.controller_type is not None else "<unknown>",
+            profile.hardware_type if profile.hardware_type is not None else "<unknown>",
+            profile.equipment_flags,
+            len(profile.body_names),
             len(features),
+            profile.has_solar,
+            profile.has_cooling,
+            profile.has_chlorinator,
+            profile.has_chemistry,
+            profile.has_hybrid_heater,
+            profile.intelliflo_pump_count,
         )
         for feature in features:
             LOGGER.info(
@@ -358,6 +450,44 @@ class ScreenLogicPyClient(ScreenLogicClient):
         )
         time.sleep(remaining)
 
+    def _command_worker_loop(self) -> None:
+        while True:
+            with self._command_condition:
+                while not self._command_queue:
+                    self._command_condition.wait()
+                command = self._command_queue.pop(0)
+
+            result: PoolState | None = None
+            error: Exception | None = None
+            try:
+                with self._lock:
+                    self._wait_for_command_slot(command.description)
+                    LOGGER.info("ScreenLogic command requested: %s", command.description)
+                    self._last_data = asyncio.run(
+                        self._async_with_gateway(
+                            operation=command.operation,
+                            update_before=False,
+                        )
+                    )
+                    self._last_command_at = time.monotonic()
+                    self._last_refresh_at = self._last_command_at
+                    self._apply_data_to_state(self._last_data)
+                    self._equipment_profile = self._build_equipment_profile(self._last_data)
+                    self.state.connected = True
+                    self._log_state_digest(self._last_data)
+                    LOGGER.info("ScreenLogic command completed: %s", command.description)
+                    result = self.state
+            except Exception as exc:
+                with self._lock:
+                    self._last_command_at = time.monotonic()
+                LOGGER.warning("ScreenLogic command failed: %s: %s", command.description, exc)
+                error = exc
+
+            for token in command.tokens:
+                token.result = result
+                token.error = error
+                token.event.set()
+
     def _map_heat_mode(self, heat_mode: int, equipment_flags: int) -> int:
         has_solar = bool(equipment_flags & 0x1)
         if not has_solar:
@@ -369,10 +499,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             pump_state = self._nested_value(pump, "state")
             rpm_now = self._nested_value(pump, "rpm_now")
             watts_now = self._nested_value(pump, "watts_now")
-            if any(
-                int(value or 0) > 0
-                for value in (pump_state, rpm_now, watts_now)
-            ):
+            if any(int(value or 0) > 0 for value in (pump_state, rpm_now, watts_now)):
                 return True
 
         for circuit in circuits.values():
@@ -435,6 +562,26 @@ class ScreenLogicPyClient(ScreenLogicClient):
                 except (TypeError, ValueError):
                     values.add(int(enum_value.value))
         return values
+
+    def _find_queued_command(self, write_key: str) -> _QueuedCommand | None:
+        for queued in reversed(self._command_queue):
+            if queued.write_key == write_key:
+                return queued
+        return None
+
+    def _count_intelliflo_flags(self, equipment_flags: int) -> int:
+        count = 0
+        for bit in (0x100, 0x200, 0x400, 0x800):
+            if equipment_flags & bit:
+                count += 1
+        return count
+
+    def _body_name(self, index: Any) -> str:
+        try:
+            numeric = int(index)
+        except (TypeError, ValueError):
+            return f"Body {index}"
+        return {0: "Pool", 1: "Spa"}.get(numeric, f"Body {numeric}")
 
     def _ensure_write_allowed(self) -> None:
         if not self.control_enabled:

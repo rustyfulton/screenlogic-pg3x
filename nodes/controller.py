@@ -162,13 +162,21 @@ class ControllerNode(udi_interface.Node):
                 )
                 self.feature_nodes[address] = node
                 self.poly.addNode(node)
+            else:
+                self._sync_feature_node_name(self.feature_nodes[address], feature)
             self.feature_nodes[address].update_from_feature(feature)
 
     def _feature_allowed(self, feature):
+        name = str(feature.name).strip()
+        lowered = name.lower()
         tokens = {
             str(feature.circuit_id).lower(),
-            str(feature.name).strip().lower(),
+            lowered,
         }
+        if self._is_placeholder_feature(feature):
+            return False
+        if feature.function == 2:
+            return False
         if self.feature_include and not any(token in self.feature_include for token in tokens):
             return False
         if self.feature_exclude and any(token in self.feature_exclude for token in tokens):
@@ -177,6 +185,35 @@ class ControllerNode(udi_interface.Node):
 
     def _feature_address(self, circuit_id):
         return f"f{int(circuit_id)}"
+
+    def _is_placeholder_feature(self, feature):
+        name = str(feature.name).strip().lower()
+        if "[not used]" in name:
+            return True
+        if feature.function == 0 and feature.interface == 2 and name.startswith("feature "):
+            return True
+        return False
+
+    def _sync_feature_node_name(self, node, feature):
+        desired_name = f"{feature.name} ({feature.circuit_id})"
+        if getattr(node, "name", None) == desired_name:
+            return
+        LOGGER.info(
+            "Updating ScreenLogic feature node name address=%s old=%s new=%s",
+            node.address,
+            getattr(node, "name", "<unknown>"),
+            desired_name,
+        )
+        node.name = desired_name
+        rename = getattr(node, "setName", None)
+        if callable(rename):
+            try:
+                rename(desired_name)
+            except Exception:
+                LOGGER.exception(
+                    "Unable to push updated ScreenLogic feature node name for %s",
+                    node.address,
+                )
 
     def discover(self, command=None):
         LOGGER.info("ScreenLogic discover invoked")
