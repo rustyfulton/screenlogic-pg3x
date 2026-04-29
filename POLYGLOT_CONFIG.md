@@ -23,9 +23,17 @@ This build supports a simulated backend and a live ScreenLogic backend through
 - `control_enabled`
   - `false` keeps the node server read-only.
   - `true` allows write commands such as feature on/off and heat mode changes.
+- `poll_enabled`
+  - `false` keeps the live ScreenLogic backend in command-only/manual-refresh mode.
+  - `true` allows background polling at the configured `poll_seconds` interval.
+  - Defaults to `false` for `backend_mode=screenlogic` and `true` for `fake`.
 - `poll_seconds`
   - Minimum live refresh interval. Defaults to `60`; values below `10` are
     raised to `10`.
+- `include_solar_node`
+  - `true` keeps the fixed `Solar Heater` node visible.
+- `include_solar_thermostat_node`
+  - `true` keeps the fixed `Solar Thermostat` node visible.
 - `min_command_seconds`
   - Minimum delay between write commands. Defaults to `10`; values below `5`
     are raised to `5`.
@@ -43,6 +51,8 @@ This build supports a simulated backend and a live ScreenLogic backend through
 ## Current Safety Defaults
 
 - Live write commands are blocked unless `control_enabled=true`.
+- Live background polling is disabled by default; use `QUERY`, `REFRESH`, or a
+  write command to fetch fresh state unless `poll_enabled=true`.
 - Write commands are paced by `min_command_seconds`.
 - Password values are not logged. Diagnostics report only password labels such
   as blank/configured length.

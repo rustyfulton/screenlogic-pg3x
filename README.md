@@ -11,6 +11,8 @@ Current capabilities:
 - discovered ScreenLogic circuit/feature nodes with on/off commands
 - read-only default mode with opt-in writes through `control_enabled`
 - conservative command pacing to avoid rapid back-to-back ScreenLogic writes
+- command-only live refresh mode through `poll_enabled=false`
+- configurable fixed solar nodes for different equipment layouts
 
 The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and

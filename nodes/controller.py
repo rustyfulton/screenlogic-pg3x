@@ -21,6 +21,9 @@ class ControllerNode(udi_interface.Node):
         name,
         client,
         include_dummy_thermostat=True,
+        poll_enabled=True,
+        include_solar_node=True,
+        include_solar_thermostat_node=True,
         feature_nodes_enabled=True,
         feature_include=(),
         feature_exclude=(),
@@ -28,6 +31,9 @@ class ControllerNode(udi_interface.Node):
         super().__init__(polyglot, primary, address, name)
         self.client = client
         self.include_dummy_thermostat = include_dummy_thermostat
+        self.poll_enabled = poll_enabled
+        self.include_solar_node = include_solar_node
+        self.include_solar_thermostat_node = include_solar_thermostat_node
         self.feature_nodes_enabled = feature_nodes_enabled
         self.feature_include = tuple(feature_include or ())
         self.feature_exclude = tuple(feature_exclude or ())
@@ -54,7 +60,7 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.pool_node)
-        if self.solar_node is None:
+        if self.include_solar_node and self.solar_node is None:
             self.solar_node = SolarHeaterNode(
                 self.poly,
                 self.address,
@@ -63,7 +69,7 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.solar_node)
-        if self.solar_thermostat_node is None:
+        if self.include_solar_thermostat_node and self.solar_thermostat_node is None:
             self.solar_thermostat_node = SolarThermostatNode(
                 self.poly,
                 self.address,
@@ -85,6 +91,9 @@ class ControllerNode(udi_interface.Node):
         self,
         client,
         include_dummy_thermostat=None,
+        poll_enabled=None,
+        include_solar_node=None,
+        include_solar_thermostat_node=None,
         feature_nodes_enabled=None,
         feature_include=None,
         feature_exclude=None,
@@ -92,6 +101,12 @@ class ControllerNode(udi_interface.Node):
         self.client = client
         if include_dummy_thermostat is not None:
             self.include_dummy_thermostat = include_dummy_thermostat
+        if poll_enabled is not None:
+            self.poll_enabled = poll_enabled
+        if include_solar_node is not None:
+            self.include_solar_node = include_solar_node
+        if include_solar_thermostat_node is not None:
+            self.include_solar_thermostat_node = include_solar_thermostat_node
         if feature_nodes_enabled is not None:
             self.feature_nodes_enabled = feature_nodes_enabled
         if feature_include is not None:
@@ -107,8 +122,11 @@ class ControllerNode(udi_interface.Node):
             self.solar_thermostat_node.client = client
         for node in self.feature_nodes.values():
             node.client = client
+        self.ensure_children()
 
     def shortPoll(self):
+        if not self.poll_enabled:
+            return
         self.refresh_children()
 
     def longPoll(self):

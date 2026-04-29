@@ -38,8 +38,11 @@ class NodeServerConfig:
     screenlogic_port: int = 0
     screenlogic_password: str = ""
     control_enabled: bool = False
+    poll_enabled: bool = True
     poll_seconds: int = 60
     include_dummy_thermostat: bool = False
+    include_solar_node: bool = True
+    include_solar_thermostat_node: bool = True
     feature_nodes_enabled: bool = True
     feature_include: tuple[str, ...] = ()
     feature_exclude: tuple[str, ...] = ()
@@ -59,6 +62,18 @@ class NodeServerConfig:
             params.get("include_dummy_thermostat"),
             default=False,
         )
+        poll_enabled = _normalize_bool(
+            params.get("poll_enabled"),
+            default=backend_mode == "fake",
+        )
+        include_solar_node = _normalize_bool(
+            params.get("include_solar_node"),
+            default=True,
+        )
+        include_solar_thermostat_node = _normalize_bool(
+            params.get("include_solar_thermostat_node"),
+            default=True,
+        )
         if backend_mode == "screenlogic":
             include_dummy_thermostat = False
 
@@ -69,8 +84,11 @@ class NodeServerConfig:
             screenlogic_port=_normalize_int(params.get("screenlogic_port"), 0),
             screenlogic_password=str(params.get("screenlogic_password", "")).strip(),
             control_enabled=_normalize_bool(params.get("control_enabled"), default=False),
+            poll_enabled=poll_enabled,
             poll_seconds=max(10, _normalize_int(params.get("poll_seconds"), 60)),
             include_dummy_thermostat=include_dummy_thermostat,
+            include_solar_node=include_solar_node,
+            include_solar_thermostat_node=include_solar_thermostat_node,
             feature_nodes_enabled=_normalize_bool(
                 params.get("feature_nodes_enabled"),
                 default=True,

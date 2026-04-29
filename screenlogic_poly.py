@@ -39,11 +39,16 @@ class ScreenLogicNodeServer:
         self.custom_params = params
         self.config = NodeServerConfig.from_params(params)
         LOGGER.info(
-            "Received custom params; backend_mode=%s host=%s port=%s system_name=%s",
+            "Received custom params; backend_mode=%s host=%s port=%s system_name=%s "
+            "poll_enabled=%s feature_nodes_enabled=%s solar_node=%s solar_thermostat_node=%s",
             self.config.backend_mode,
             self.config.screenlogic_host or "<none>",
             self.config.screenlogic_port or 0,
             self.config.screenlogic_system_name or "<none>",
+            self.config.poll_enabled,
+            self.config.feature_nodes_enabled,
+            self.config.include_solar_node,
+            self.config.include_solar_thermostat_node,
         )
         if ENABLE_HARDCODED_DIAGNOSTICS:
             LOGGER.info(
@@ -104,6 +109,9 @@ class ScreenLogicNodeServer:
         self.controller.set_client(
             self.client,
             include_dummy_thermostat=self.config.include_dummy_thermostat,
+            poll_enabled=self.config.poll_enabled,
+            include_solar_node=self.config.include_solar_node,
+            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
             feature_nodes_enabled=self.config.feature_nodes_enabled,
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
@@ -141,6 +149,17 @@ class ScreenLogicNodeServer:
             else:
                 self._remove_notice("screenlogic_target")
                 self._update_equipment_notices()
+        self._add_notice(
+            {
+                "screenlogic_runtime": (
+                    "Runtime: "
+                    f"poll_enabled={self.config.poll_enabled} "
+                    f"feature_nodes={self.config.feature_nodes_enabled} "
+                    f"solar_node={self.config.include_solar_node} "
+                    f"solar_thermostat_node={self.config.include_solar_thermostat_node}"
+                )
+            }
+        )
 
     def _remove_notice(self, key):
         remove_notice = getattr(self.polyglot, "removeNotice", None)
@@ -157,6 +176,7 @@ class ScreenLogicNodeServer:
             "screenlogic_profile",
             "screenlogic_capabilities",
             "screenlogic_features",
+            "screenlogic_runtime",
         ):
             self._remove_notice(key)
 
@@ -224,6 +244,9 @@ class ScreenLogicNodeServer:
             "ScreenLogic Pool Controller",
             self.client,
             include_dummy_thermostat=self.config.include_dummy_thermostat,
+            poll_enabled=self.config.poll_enabled,
+            include_solar_node=self.config.include_solar_node,
+            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
             feature_nodes_enabled=self.config.feature_nodes_enabled,
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
