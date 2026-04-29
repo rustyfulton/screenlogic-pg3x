@@ -27,6 +27,7 @@ class _QueuedCommand:
     write_key: str
     description: str
     operation: Callable[[Any], Any]
+    update_before: bool = False
     tokens: list[_CommandToken] = field(default_factory=list)
 
 
@@ -115,6 +116,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             operation=lambda gateway: gateway.async_set_heat_mode(
                 0, 3 if enabled else 0
             ),
+            update_before=True,
         )
 
     def set_pool_setpoint(self, value: int) -> PoolState:
@@ -123,6 +125,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             write_key="body:0:heat_temp",
             description=f"set pool heat setpoint {setpoint}",
             operation=lambda gateway: gateway.async_set_heat_temp(0, setpoint),
+            update_before=True,
         )
 
     def set_solar_enabled(self, enabled: bool) -> PoolState:
@@ -145,6 +148,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
             write_key="body:0:heat_mode",
             description=f"set pool heat mode {mode}",
             operation=lambda gateway: gateway.async_set_heat_mode(0, mode),
+            update_before=True,
         )
 
     def set_solar_fan_mode(self, value: int) -> PoolState:
@@ -194,6 +198,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
         write_key: str,
         description: str,
         operation: Callable[[Any], Any],
+        update_before: bool = False,
     ) -> PoolState:
         self._ensure_write_allowed()
         token = _CommandToken()
@@ -215,6 +220,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
                         write_key=write_key,
                         description=description,
                         operation=operation,
+                        update_before=update_before,
                         tokens=[token],
                     )
                 )
@@ -466,7 +472,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
                     self._last_data = asyncio.run(
                         self._async_with_gateway(
                             operation=command.operation,
-                            update_before=False,
+                            update_before=command.update_before,
                         )
                     )
                     self._last_command_at = time.monotonic()
