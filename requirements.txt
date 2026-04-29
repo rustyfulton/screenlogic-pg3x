@@ -1,0 +1,2 @@
+udi_interface>=3.3.16
+screenlogicpy>=0.10.2

@@ -1,0 +1,44 @@
+<editors>
+  <editor id="bool">
+    <range uom="2">
+      <prec>0</prec>
+      <min>0</min>
+      <max>1</max>
+      <step>1</step>
+    </range>
+    <range uom="25">
+      <prec>0</prec>
+      <min>0</min>
+      <max>1</max>
+      <step>1</step>
+    </range>
+  </editor>
+
+  <editor id="tempf">
+    <range uom="17">
+      <prec>0</prec>
+      <min>0</min>
+      <max>120</max>
+      <step>1</step>
+    </range>
+  </editor>
+
+  <editor id="I_TEMP_F">
+    <range uom="17" min="-50" max="150" step="0.5" prec="1" />
+  </editor>
+  <editor id="I_CLISPC_F">
+    <range uom="17" min="32" max="90" step="1" prec="0" />
+  </editor>
+  <editor id="I_CLISPH_F">
+    <range uom="17" min="32" max="90" step="1" prec="0" />
+  </editor>
+  <editor id="I_TSTAT_MODE">
+    <range uom="67" subset="0-3" />
+  </editor>
+  <editor id="I_TSTAT_FAN_MODE">
+    <range uom="68" subset="0,1,6" />
+  </editor>
+  <editor id="I_TSTAT_HCS">
+    <range uom="66" subset="0-13" />
+  </editor>
+</editors>

@@ -1,0 +1,132 @@
+<nodeDefs>
+  <nodeDef id="poolctl" nls="poolctl">
+    <sts>
+      <st id="ST" editor="bool" />
+    </sts>
+    <cmds>
+      <accepts>
+        <cmd id="DISCOVER" />
+        <cmd id="QUERY" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="pool" nls="pool">
+    <sts>
+      <st id="ST" editor="bool" />
+      <st id="GV0" editor="tempf" />
+      <st id="GV1" editor="tempf" />
+      <st id="GV2" editor="bool" />
+      <st id="GV3" editor="bool" />
+      <st id="GV4" editor="tempf" />
+    </sts>
+    <cmds>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="PUMP_ON" />
+        <cmd id="PUMP_OFF" />
+        <cmd id="HEATER_ON" />
+        <cmd id="HEATER_OFF" />
+        <cmd id="SET_POOL_SP">
+          <p id="GV4" editor="tempf" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="solarhtr" nls="solarhtr">
+    <sts>
+      <st id="ST" editor="bool" />
+      <st id="GV0" editor="tempf" />
+      <st id="CLISPH" editor="tempf" />
+      <st id="GV2" editor="bool" />
+      <st id="GV3" editor="bool" />
+    </sts>
+    <cmds>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="SOLAR_ON" />
+        <cmd id="SOLAR_OFF" />
+        <cmd id="CLISPH">
+          <p id="CLISPH" editor="tempf" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="solartstat" nodeType="140" nls="solartstat">
+    <sts>
+      <st id="ST" editor="I_TEMP_F" />
+      <st id="CLISPH" editor="I_CLISPH_F" />
+      <st id="CLISPC" editor="I_CLISPC_F" />
+      <st id="CLIMD" editor="I_TSTAT_MODE" />
+      <st id="CLIHCS" editor="I_TSTAT_HCS" />
+      <st id="CLIFS" editor="I_TSTAT_FAN_MODE" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="CLISPH">
+          <p id="" editor="I_CLISPH_F" init="CLISPH" />
+        </cmd>
+        <cmd id="CLISPC">
+          <p id="" editor="I_CLISPC_F" init="CLISPC" />
+        </cmd>
+        <cmd id="CLIMD">
+          <p id="" editor="I_TSTAT_MODE" init="CLIMD" />
+        </cmd>
+        <cmd id="CLIFS">
+          <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="feature" nls="feature">
+    <sts>
+      <st id="ST" editor="bool" />
+    </sts>
+    <cmds>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="FEATURE_ON" />
+        <cmd id="FEATURE_OFF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="dummytstat" nodeType="140" nls="dummytstat">
+    <sts>
+      <st id="ST" editor="I_TEMP_F" />
+      <st id="CLISPH" editor="I_CLISPH_F" />
+      <st id="CLISPC" editor="I_CLISPC_F" />
+      <st id="CLIMD" editor="I_TSTAT_MODE" />
+      <st id="CLIHCS" editor="I_TSTAT_HCS" />
+      <st id="CLIFS" editor="I_TSTAT_FAN_MODE" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="CLISPH">
+          <p id="" editor="I_CLISPH_F" init="CLISPH" />
+        </cmd>
+        <cmd id="CLISPC">
+          <p id="" editor="I_CLISPC_F" init="CLISPC" />
+        </cmd>
+        <cmd id="CLIMD">
+          <p id="" editor="I_TSTAT_MODE" init="CLIMD" />
+        </cmd>
+        <cmd id="CLIFS">
+          <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+</nodeDefs>
