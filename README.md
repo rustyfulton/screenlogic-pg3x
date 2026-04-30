@@ -21,8 +21,7 @@ Preferred PG3x configuration now centers on a single `mode` parameter:
 - `mode=3` live read/write mode with polling
 
 Advanced overrides use `OPT_` prefixes, and debug-only settings use
-`DEBUG_` prefixes. Older parameter names are still accepted for backward
-compatibility.
+`DEBUG_` prefixes.
 
 For live PG3 operation, the recommended polling posture is:
 - `shortPoll=180` for normal state refresh in polling modes
