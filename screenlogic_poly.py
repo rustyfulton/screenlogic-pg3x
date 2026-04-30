@@ -132,7 +132,7 @@ class ScreenLogicNodeServer:
             LOGGER.exception("Backend client connect failed during parameter refresh")
         self._update_equipment_notices()
         if self.config.startup_refresh:
-            self.controller.refresh_children()
+            self.controller.refresh_children(refresh_topology=True)
 
     def _update_notices(self):
         if self.config.use_fake_backend:
