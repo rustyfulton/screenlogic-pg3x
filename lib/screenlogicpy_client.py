@@ -42,6 +42,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
         control_enabled: bool = False,
         min_refresh_seconds: int = 30,
         min_command_seconds: int = 10,
+        sync_after_write: bool = True,
     ) -> None:
         self.host = host
         self.port = port or 80
@@ -50,6 +51,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
         self.control_enabled = control_enabled
         self.min_refresh_seconds = max(10, int(min_refresh_seconds or 30))
         self.min_command_seconds = max(5, int(min_command_seconds or 10))
+        self.sync_after_write = bool(sync_after_write)
         self.state = PoolState(connected=False)
         self._lock = threading.Lock()
         self._last_data: dict[str, Any] = {}
@@ -246,6 +248,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
         operation: Callable[[Any], Any] | None = None,
         *,
         update_before: bool = True,
+        update_after: bool = True,
     ) -> dict[str, Any]:
         from screenlogicpy import ScreenLogicGateway
         import screenlogicpy.requests.login as login_module
@@ -271,7 +274,8 @@ class ScreenLogicPyClient(ScreenLogicClient):
                 await gateway.async_update()
             if operation is not None:
                 await operation(gateway)
-                await gateway.async_update()
+                if update_after:
+                    await gateway.async_update()
             return gateway.get_data()
         finally:
             if patch_login:
@@ -473,6 +477,7 @@ class ScreenLogicPyClient(ScreenLogicClient):
                         self._async_with_gateway(
                             operation=command.operation,
                             update_before=command.update_before,
+                            update_after=self.sync_after_write,
                         )
                     )
                     self._last_command_at = time.monotonic()

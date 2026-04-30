@@ -14,11 +14,15 @@ Current capabilities:
 - command-only live refresh mode through `poll_enabled=false`
 - configurable fixed solar nodes for different equipment layouts
 
-Preferred PG3x custom parameters now follow a cleaner naming scheme:
-`connection_mode`, `allow_writes`, `auto_refresh`,
-`refresh_interval_seconds`, `command_interval_seconds`,
-`show_features`, `show_solar_heater`, and `show_solar_thermostat`.
-Older parameter names are still accepted for backward compatibility.
+Preferred PG3x configuration now centers on a single `mode` parameter:
+- `mode=0` simulated/fake mode
+- `mode=1` live read-only mode with polling
+- `mode=2` live read/write mode without polling
+- `mode=3` live read/write mode with polling
+
+Advanced overrides use `OPT_` prefixes, and debug-only settings use
+`DEBUG_` prefixes. Older parameter names are still accepted for backward
+compatibility.
 
 The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and

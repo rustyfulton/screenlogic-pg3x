@@ -39,6 +39,7 @@ def _normalize_csv(value) -> tuple[str, ...]:
 
 @dataclass
 class NodeServerConfig:
+    mode: int = 0
     backend_mode: str = "fake"
     screenlogic_system_name: str = ""
     screenlogic_host: str = ""
@@ -47,6 +48,9 @@ class NodeServerConfig:
     control_enabled: bool = False
     poll_enabled: bool = True
     poll_seconds: int = 60
+    startup_refresh: bool = True
+    sync_after_write: bool = True
+    include_pool_node: bool = True
     include_dummy_thermostat: bool = False
     include_solar_node: bool = True
     include_solar_thermostat_node: bool = True
@@ -61,24 +65,69 @@ class NodeServerConfig:
 
     @classmethod
     def from_params(cls, params: dict) -> "NodeServerConfig":
-        requested_mode = str(
+        mode_value = _first_param(params, "mode")
+        parsed_mode = _normalize_int(mode_value, -1)
+        dummy_mode = _normalize_bool(params.get("dummy_mode"), default=False)
+        requested_connection_mode = str(
             _first_param(params, "connection_mode", "backend_mode") or ""
         ).strip().lower()
-        dummy_mode = _normalize_bool(params.get("dummy_mode"), default=False)
-        mode_aliases = {
-            "fake": "fake",
-            "simulated": "fake",
-            "simulation": "fake",
-            "screenlogic": "screenlogic",
-            "live": "screenlogic",
-        }
-        backend_mode = mode_aliases.get(requested_mode, "")
-        if backend_mode not in {"fake", "screenlogic"}:
-            backend_mode = "fake" if dummy_mode or not params else "screenlogic"
+
+        if parsed_mode in (0, 1, 2, 3):
+            mode = parsed_mode
+        else:
+            connection_aliases = {
+                "0": 0,
+                "fake": 0,
+                "simulated": 0,
+                "simulation": 0,
+                "1": 1,
+                "readonly": 1,
+                "read_only": 1,
+                "read-only": 1,
+                "2": 2,
+                "control": 2,
+                "write": 2,
+                "readwrite": 2,
+                "read_write": 2,
+                "read-write": 2,
+                "live": 2,
+                "screenlogic": 2,
+                "3": 3,
+                "control_polling": 3,
+                "control+polling": 3,
+                "readwrite_polling": 3,
+                "read-write-polling": 3,
+            }
+            mode = connection_aliases.get(requested_connection_mode, -1)
+
+        if mode not in (0, 1, 2, 3):
+            if dummy_mode:
+                mode = 0
+            elif not params:
+                mode = 0
+            else:
+                control_enabled_legacy = _normalize_bool(
+                    _first_param(params, "allow_writes", "control_enabled"),
+                    default=False,
+                )
+                poll_enabled_legacy = _normalize_bool(
+                    _first_param(params, "auto_refresh", "poll_enabled"),
+                    default=False,
+                )
+                if control_enabled_legacy:
+                    mode = 3 if poll_enabled_legacy else 2
+                else:
+                    mode = 1 if poll_enabled_legacy else 1
+
+        backend_mode = "fake" if mode == 0 else "screenlogic"
+        control_enabled = mode in (2, 3)
+        poll_enabled_default = mode in (0, 1, 3)
+        startup_refresh_default = mode != 0
 
         include_dummy_thermostat = _normalize_bool(
             _first_param(
                 params,
+                "OPT_show_dummy_thermostat",
                 "show_dummy_thermostat",
                 "include_dummy_thermostat",
             ),
@@ -86,15 +135,33 @@ class NodeServerConfig:
         )
         poll_enabled = _normalize_bool(
             _first_param(params, "auto_refresh", "poll_enabled"),
-            default=backend_mode == "fake",
+            default=poll_enabled_default,
+        )
+        startup_refresh = _normalize_bool(
+            _first_param(params, "OPT_startup_refresh", "startup_refresh"),
+            default=startup_refresh_default,
+        )
+        sync_after_write = _normalize_bool(
+            _first_param(params, "OPT_sync_after_write", "sync_after_write"),
+            default=True,
+        )
+        include_pool_node = _normalize_bool(
+            _first_param(params, "OPT_show_pool_node", "show_pool_node"),
+            default=True,
         )
         include_solar_node = _normalize_bool(
-            _first_param(params, "show_solar_heater", "include_solar_node"),
+            _first_param(
+                params,
+                "OPT_show_solar_heater",
+                "show_solar_heater",
+                "include_solar_node",
+            ),
             default=True,
         )
         include_solar_thermostat_node = _normalize_bool(
             _first_param(
                 params,
+                "OPT_show_solar_thermostat",
                 "show_solar_thermostat",
                 "include_solar_thermostat_node",
             ),
@@ -104,6 +171,7 @@ class NodeServerConfig:
             include_dummy_thermostat = False
 
         return cls(
+            mode=mode,
             backend_mode=backend_mode,
             screenlogic_system_name=str(
                 _first_param(
@@ -119,36 +187,57 @@ class NodeServerConfig:
                 _first_param(params, "screenlogic_password")
                 or ""
             ).strip(),
-            control_enabled=_normalize_bool(
-                _first_param(params, "allow_writes", "control_enabled"),
-                default=False,
-            ),
+            control_enabled=control_enabled,
             poll_enabled=poll_enabled,
             poll_seconds=max(
                 10,
                 _normalize_int(
-                    _first_param(params, "refresh_interval_seconds", "poll_seconds"),
+                    _first_param(
+                        params,
+                        "OPT_refresh_interval_seconds",
+                        "refresh_interval_seconds",
+                        "poll_seconds",
+                    ),
                     60,
                 ),
             ),
+            startup_refresh=startup_refresh,
+            sync_after_write=sync_after_write,
+            include_pool_node=include_pool_node,
             include_dummy_thermostat=include_dummy_thermostat,
             include_solar_node=include_solar_node,
             include_solar_thermostat_node=include_solar_thermostat_node,
             feature_nodes_enabled=_normalize_bool(
-                _first_param(params, "show_features", "feature_nodes_enabled"),
+                _first_param(
+                    params,
+                    "OPT_show_features",
+                    "show_features",
+                    "feature_nodes_enabled",
+                ),
                 default=True,
             ),
             feature_include=_normalize_csv(
-                _first_param(params, "feature_include_list", "feature_include")
+                _first_param(
+                    params,
+                    "OPT_include_circuits",
+                    "feature_include_list",
+                    "feature_include",
+                )
             ),
             feature_exclude=_normalize_csv(
-                _first_param(params, "feature_exclude_list", "feature_exclude")
+                _first_param(
+                    params,
+                    "OPT_exclude_circuits",
+                    "feature_exclude_list",
+                    "feature_exclude",
+                )
             ),
             min_command_seconds=max(
                 5,
                 _normalize_int(
                     _first_param(
                         params,
+                        "OPT_command_interval_seconds",
                         "command_interval_seconds",
                         "min_command_seconds",
                     ),

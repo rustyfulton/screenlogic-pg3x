@@ -39,18 +39,20 @@ class ScreenLogicNodeServer:
         self.custom_params = params
         self.config = NodeServerConfig.from_params(params)
         LOGGER.info(
-            "Received custom params; connection_mode=%s host=%s port=%s system_name=%s "
-            "auto_refresh=%s show_features=%s show_solar_heater=%s "
-            "show_solar_thermostat=%s allow_writes=%s",
+            "Received custom params; mode=%s backend=%s host=%s port=%s system_name=%s "
+            "auto_refresh=%s show_pool_node=%s show_features=%s "
+            "show_solar_heater=%s show_solar_thermostat=%s read_only=%s",
+            self.config.mode,
             self.config.backend_mode,
             self.config.screenlogic_host or "<none>",
             self.config.screenlogic_port or 0,
             self.config.screenlogic_system_name or "<none>",
             self.config.poll_enabled,
+            self.config.include_pool_node,
             self.config.feature_nodes_enabled,
             self.config.include_solar_node,
             self.config.include_solar_thermostat_node,
-            self.config.control_enabled,
+            not self.config.control_enabled,
         )
         if ENABLE_HARDCODED_DIAGNOSTICS:
             LOGGER.info(
@@ -86,14 +88,16 @@ class ScreenLogicNodeServer:
 
         LOGGER.info(
             "Using ScreenLogic backend target host=%s port=%s system_name=%s via screenlogicpy "
-            "(password_configured=%s control_enabled=%s poll_seconds=%s min_command_seconds=%s)",
+            "(password_configured=%s read_only=%s poll_seconds=%s min_command_seconds=%s "
+            "sync_after_write=%s)",
             host or "<none>",
             port or 0,
             system_name or "<none>",
             bool(password),
-            self.config.control_enabled,
+            not self.config.control_enabled,
             self.config.poll_seconds,
             self.config.min_command_seconds,
+            self.config.sync_after_write,
         )
         return ScreenLogicPyClient(
             host=host,
@@ -103,6 +107,7 @@ class ScreenLogicNodeServer:
             password=password,
             min_refresh_seconds=self.config.poll_seconds,
             min_command_seconds=self.config.min_command_seconds,
+            sync_after_write=self.config.sync_after_write,
         )
 
     def _rebuild_client(self):
@@ -110,7 +115,9 @@ class ScreenLogicNodeServer:
         self.client = self._build_client()
         self.controller.set_client(
             self.client,
+            include_pool_node=self.config.include_pool_node,
             include_dummy_thermostat=self.config.include_dummy_thermostat,
+            startup_refresh=self.config.startup_refresh,
             poll_enabled=self.config.poll_enabled,
             include_solar_node=self.config.include_solar_node,
             include_solar_thermostat_node=self.config.include_solar_thermostat_node,
@@ -119,11 +126,13 @@ class ScreenLogicNodeServer:
             feature_exclude=self.config.feature_exclude,
         )
         try:
-            self.client.connect()
+            if self.config.startup_refresh:
+                self.client.connect()
         except Exception:
             LOGGER.exception("Backend client connect failed during parameter refresh")
         self._update_equipment_notices()
-        self.controller.refresh_children()
+        if self.config.startup_refresh:
+            self.controller.refresh_children()
 
     def _update_notices(self):
         if self.config.use_fake_backend:
@@ -132,7 +141,7 @@ class ScreenLogicNodeServer:
             self._add_notice(
                 {
                     "backend_mode": (
-                        "Using fake backend. Set backend_mode=screenlogic and provide "
+                        "Using fake backend. Set mode=1, 2, or 3 and provide "
                         "screenlogic_host/screenlogic_port to begin live integration."
                     )
                 }
@@ -143,7 +152,7 @@ class ScreenLogicNodeServer:
                 self._add_notice(
                     {
                         "screenlogic_target": (
-                            "ScreenLogic backend selected but screenlogic_host or "
+                            "Live ScreenLogic mode selected but screenlogic_host or "
                             "screenlogic_port is missing."
                         )
                     }
@@ -155,11 +164,13 @@ class ScreenLogicNodeServer:
             {
                 "screenlogic_runtime": (
                     "Runtime: "
+                    f"mode={self.config.mode} "
                     f"auto_refresh={self.config.poll_enabled} "
+                    f"show_pool_node={self.config.include_pool_node} "
                     f"show_features={self.config.feature_nodes_enabled} "
                     f"show_solar_heater={self.config.include_solar_node} "
                     f"show_solar_thermostat={self.config.include_solar_thermostat_node} "
-                    f"allow_writes={self.config.control_enabled}"
+                    f"read_only={not self.config.control_enabled}"
                 )
             }
         )
@@ -246,7 +257,9 @@ class ScreenLogicNodeServer:
             "controller",
             "ScreenLogic Pool Controller",
             self.client,
+            include_pool_node=self.config.include_pool_node,
             include_dummy_thermostat=self.config.include_dummy_thermostat,
+            startup_refresh=self.config.startup_refresh,
             poll_enabled=self.config.poll_enabled,
             include_solar_node=self.config.include_solar_node,
             include_solar_thermostat_node=self.config.include_solar_thermostat_node,

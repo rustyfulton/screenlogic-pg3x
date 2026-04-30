@@ -3,13 +3,10 @@
 This build supports a simulated backend and a live ScreenLogic backend through
 `screenlogicpy`.
 
-## Preferred Custom Parameters
+## Primary Parameters
 
 ### Connection
 
-- `connection_mode`
-  - `simulated` uses the built-in test backend.
-  - `live` enables the real local ScreenLogic adapter.
 - `screenlogic_host`
   - Hostname or IP address for the Pentair ScreenLogic adapter.
 - `screenlogic_port`
@@ -21,68 +18,143 @@ This build supports a simulated backend and a live ScreenLogic backend through
   - Optional ScreenLogic password. Leave blank for the normal local
     `screenlogicpy` login behavior.
 
-### Safety And Refresh
+### Runtime Mode
 
-- `allow_writes`
-  - `false` keeps the node server read-only.
-  - `true` allows write commands such as feature on/off and heat mode changes.
-- `auto_refresh`
-  - `false` keeps the live ScreenLogic backend in command-only/manual-refresh mode.
-  - `true` allows background polling at the configured refresh interval.
-  - Defaults to `false` for live ScreenLogic and `true` for simulated mode.
-- `refresh_interval_seconds`
-  - Minimum live refresh interval. Defaults to `60`; values below `10` are
-    raised to `10`.
-- `command_interval_seconds`
-  - Minimum delay between write commands. Defaults to `10`; values below `5`
-    are raised to `5`.
+- `mode`
+  - `0` = simulated/fake mode
+  - `1` = live read-only mode with polling enabled
+  - `2` = live read/write mode with polling disabled
+  - `3` = live read/write mode with polling enabled
+
+Recommended examples:
+
+```text
+mode=0
+screenlogic_host=
+screenlogic_port=80
+screenlogic_system_name=
+screenlogic_password=
+```
+
+```text
+mode=1
+screenlogic_host=192.168.1.99
+screenlogic_port=80
+screenlogic_system_name=Pentair: F1-11-11
+screenlogic_password=
+```
+
+```text
+mode=2
+screenlogic_host=192.168.1.99
+screenlogic_port=80
+screenlogic_system_name=Pentair: F1-11-11
+screenlogic_password=
+```
+
+```text
+mode=3
+screenlogic_host=192.168.1.99
+screenlogic_port=80
+screenlogic_system_name=Pentair: F1-11-11
+screenlogic_password=
+```
+
+## Optional Parameters
+
+These are advanced overrides. The node server should run fine without them.
+
+### Refresh And Command Timing
+
+- `OPT_refresh_interval_seconds`
+  - Poll interval used by polling modes (`mode=1` and `mode=3`).
+  - Default is `60`.
+- `OPT_command_interval_seconds`
+  - Minimum spacing between write commands.
+  - Default is `10`.
+  - This exists mainly for advanced tuning; the built-in default is intended to
+    be safe for most ScreenLogic adapters.
+- `OPT_startup_refresh`
+  - `true` performs an initial live refresh during startup.
+  - Default is `true` for live modes and `false` for simulated mode.
+- `OPT_sync_after_write`
+  - `true` refreshes state after write commands.
+  - Default is `true`.
 
 ### Node Visibility
 
-- `show_features`
-  - `true` creates a node for each discovered ScreenLogic circuit/feature.
-- `show_solar_heater`
+- `OPT_show_pool_node`
+  - `true` keeps the main `Pool` node visible.
+  - Default is `true`.
+- `OPT_show_features`
+  - `true` creates nodes for discovered ScreenLogic circuits/features.
+  - Default is `true`.
+- `OPT_show_solar_heater`
   - `true` keeps the fixed `Solar Heater` node visible.
-- `show_solar_thermostat`
+  - Default is `true`.
+- `OPT_show_solar_thermostat`
   - `true` keeps the fixed `Solar Thermostat` node visible.
-- `show_dummy_thermostat`
+  - Default is `true`.
+- `OPT_show_dummy_thermostat`
   - `true` keeps the standalone `Dummy Thermostat` node visible for profile
-    experiments. This is forced off in live mode.
+    experiments.
+  - Forced off in live modes.
 
 ### Feature Filtering
 
-- `feature_include_list`
+- `OPT_include_circuits`
   - Optional comma-separated circuit IDs or exact lower-case names to include.
-    Leave blank to include all discovered circuits.
-- `feature_exclude_list`
+  - Leave blank to include all discovered circuits.
+- `OPT_exclude_circuits`
   - Optional comma-separated circuit IDs or exact lower-case names to suppress.
 
-## Legacy Compatible Names
+## Debug Parameters
 
-These still work for backward compatibility:
+These are intended for QA and troubleshooting.
 
-- `backend_mode` -> `connection_mode`
-  - `fake` maps to `simulated`
-  - `screenlogic` maps to `live`
-- `dummy_mode` -> legacy shortcut for simulated mode
-- `control_enabled` -> `allow_writes`
-- `poll_enabled` -> `auto_refresh`
-- `poll_seconds` -> `refresh_interval_seconds`
-- `min_command_seconds` -> `command_interval_seconds`
-- `feature_nodes_enabled` -> `show_features`
-- `include_solar_node` -> `show_solar_heater`
-- `include_solar_thermostat_node` -> `show_solar_thermostat`
-- `include_dummy_thermostat` -> `show_dummy_thermostat`
-- `feature_include` -> `feature_include_list`
-- `feature_exclude` -> `feature_exclude_list`
-- `screenlogic_name` -> `screenlogic_system_name`
+- `DEBUG_log_level`
+- `DEBUG_log_discovery_summary`
+- `DEBUG_log_command_queue`
+- `DEBUG_log_state_summary`
+
+Current builds may not use every debug flag yet, but these names are reserved
+for the debug-only configuration surface.
 
 ## Current Safety Defaults
 
-- Live write commands are blocked unless `control_enabled=true`.
-- Live background polling is disabled by default; use `QUERY`, `REFRESH`, or a
-  write command to fetch fresh state unless `poll_enabled=true`.
-- Write commands are paced by `min_command_seconds`.
-- Password values are not logged. Diagnostics report only password labels such
-  as blank/configured length.
+- `mode=2` is the safest full-control mode because it disables background
+  polling while still allowing writes.
+- Polling is enabled by default only in `mode=1` and `mode=3`.
+- Write commands are paced by an internal default of `10` seconds unless
+  `OPT_command_interval_seconds` overrides it.
+- Password values are not logged.
 - The legacy hardcoded diagnostic runner is disabled by default.
+
+## Legacy Compatible Names
+
+The parser still accepts older names for backward compatibility while the new
+configuration model rolls out:
+
+- `connection_mode`
+- `backend_mode`
+- `dummy_mode`
+- `allow_writes`
+- `control_enabled`
+- `auto_refresh`
+- `poll_enabled`
+- `refresh_interval_seconds`
+- `poll_seconds`
+- `command_interval_seconds`
+- `min_command_seconds`
+- `show_features`
+- `feature_nodes_enabled`
+- `show_solar_heater`
+- `include_solar_node`
+- `show_solar_thermostat`
+- `include_solar_thermostat_node`
+- `show_dummy_thermostat`
+- `include_dummy_thermostat`
+- `feature_include_list`
+- `feature_include`
+- `feature_exclude_list`
+- `feature_exclude`

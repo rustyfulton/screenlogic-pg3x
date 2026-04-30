@@ -20,7 +20,9 @@ class ControllerNode(udi_interface.Node):
         address,
         name,
         client,
+        include_pool_node=True,
         include_dummy_thermostat=True,
+        startup_refresh=True,
         poll_enabled=True,
         include_solar_node=True,
         include_solar_thermostat_node=True,
@@ -30,7 +32,9 @@ class ControllerNode(udi_interface.Node):
     ):
         super().__init__(polyglot, primary, address, name)
         self.client = client
+        self.include_pool_node = include_pool_node
         self.include_dummy_thermostat = include_dummy_thermostat
+        self.startup_refresh = startup_refresh
         self.poll_enabled = poll_enabled
         self.include_solar_node = include_solar_node
         self.include_solar_thermostat_node = include_solar_thermostat_node
@@ -45,13 +49,14 @@ class ControllerNode(udi_interface.Node):
 
     def start(self):
         LOGGER.info("Starting controller node")
-        self.client.connect()
         self.setDriver("ST", 1, force=True)
         self.ensure_children()
-        self.refresh_children()
+        if self.startup_refresh:
+            self.client.connect()
+            self.refresh_children()
 
     def ensure_children(self):
-        if self.pool_node is None:
+        if self.include_pool_node and self.pool_node is None:
             self.pool_node = PoolNode(
                 self.poly,
                 self.address,
@@ -90,7 +95,9 @@ class ControllerNode(udi_interface.Node):
     def set_client(
         self,
         client,
+        include_pool_node=None,
         include_dummy_thermostat=None,
+        startup_refresh=None,
         poll_enabled=None,
         include_solar_node=None,
         include_solar_thermostat_node=None,
@@ -99,8 +106,12 @@ class ControllerNode(udi_interface.Node):
         feature_exclude=None,
     ):
         self.client = client
+        if include_pool_node is not None:
+            self.include_pool_node = include_pool_node
         if include_dummy_thermostat is not None:
             self.include_dummy_thermostat = include_dummy_thermostat
+        if startup_refresh is not None:
+            self.startup_refresh = startup_refresh
         if poll_enabled is not None:
             self.poll_enabled = poll_enabled
         if include_solar_node is not None:
