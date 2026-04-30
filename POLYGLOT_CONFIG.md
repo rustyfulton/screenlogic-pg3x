@@ -26,23 +26,7 @@ This build supports a simulated backend and a live ScreenLogic backend through
   - `2` = live read/write mode with polling disabled
   - `3` = live read/write mode with polling enabled
 
-Recommended examples:
-
-```text
-mode=0
-screenlogic_host=
-screenlogic_port=80
-screenlogic_system_name=
-screenlogic_password=
-```
-
-```text
-mode=1
-screenlogic_host=192.168.1.99
-screenlogic_port=80
-screenlogic_system_name=Pentair: F1-11-11
-screenlogic_password=
-```
+Recommended example:
 
 ```text
 mode=2
@@ -52,13 +36,7 @@ screenlogic_system_name=Pentair: F1-11-11
 screenlogic_password=
 ```
 
-```text
-mode=3
-screenlogic_host=192.168.1.99
-screenlogic_port=80
-screenlogic_system_name=Pentair: F1-11-11
-screenlogic_password=
-```
+<span style="color:#b45309"><strong>Recommendation:</strong> Leave `screenlogic_password` blank. Password support has not been proven to work reliably yet. It may also be worth confirming in the official ScreenLogic app that your system accepts blank-password local access.</span>
 
 ## Optional Parameters
 
