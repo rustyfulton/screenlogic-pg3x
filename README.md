@@ -14,6 +14,12 @@ Current capabilities:
 - command-only live refresh mode through `poll_enabled=false`
 - configurable fixed solar nodes for different equipment layouts
 
+Preferred PG3x custom parameters now follow a cleaner naming scheme:
+`connection_mode`, `allow_writes`, `auto_refresh`,
+`refresh_interval_seconds`, `command_interval_seconds`,
+`show_features`, `show_solar_heater`, and `show_solar_thermostat`.
+Older parameter names are still accepted for backward compatibility.
+
 The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and
 circuits, map heater/solar modes from ScreenLogic data, and expose switchable

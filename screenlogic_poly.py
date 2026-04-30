@@ -39,8 +39,9 @@ class ScreenLogicNodeServer:
         self.custom_params = params
         self.config = NodeServerConfig.from_params(params)
         LOGGER.info(
-            "Received custom params; backend_mode=%s host=%s port=%s system_name=%s "
-            "poll_enabled=%s feature_nodes_enabled=%s solar_node=%s solar_thermostat_node=%s",
+            "Received custom params; connection_mode=%s host=%s port=%s system_name=%s "
+            "auto_refresh=%s show_features=%s show_solar_heater=%s "
+            "show_solar_thermostat=%s allow_writes=%s",
             self.config.backend_mode,
             self.config.screenlogic_host or "<none>",
             self.config.screenlogic_port or 0,
@@ -49,6 +50,7 @@ class ScreenLogicNodeServer:
             self.config.feature_nodes_enabled,
             self.config.include_solar_node,
             self.config.include_solar_thermostat_node,
+            self.config.control_enabled,
         )
         if ENABLE_HARDCODED_DIAGNOSTICS:
             LOGGER.info(
@@ -153,10 +155,11 @@ class ScreenLogicNodeServer:
             {
                 "screenlogic_runtime": (
                     "Runtime: "
-                    f"poll_enabled={self.config.poll_enabled} "
-                    f"feature_nodes={self.config.feature_nodes_enabled} "
-                    f"solar_node={self.config.include_solar_node} "
-                    f"solar_thermostat_node={self.config.include_solar_thermostat_node}"
+                    f"auto_refresh={self.config.poll_enabled} "
+                    f"show_features={self.config.feature_nodes_enabled} "
+                    f"show_solar_heater={self.config.include_solar_node} "
+                    f"show_solar_thermostat={self.config.include_solar_thermostat_node} "
+                    f"allow_writes={self.config.control_enabled}"
                 )
             }
         )
