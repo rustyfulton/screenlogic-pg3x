@@ -125,8 +125,15 @@ for the debug-only configuration surface.
 - `mode=2` is the safest full-control mode because it disables background
   polling while still allowing writes.
 - Polling is enabled by default only in `mode=1` and `mode=3`.
+- In polling modes, `shortPoll` should be configured as the operational state
+  refresh interval. We recommend `shortPoll=180`.
+- `longPoll` should be reserved for infrequent topology and feature inventory
+  refreshes. We recommend `longPoll=6000`.
 - Write commands are paced by an internal default of `10` seconds unless
   `OPT_command_interval_seconds` overrides it.
+- When `OPT_sync_after_write=true`, write commands use a staged follow-up
+  refresh pattern: one refresh about 2 seconds after the command, then another
+  about 5 seconds later.
 - Password values are not logged.
 - The legacy hardcoded diagnostic runner is disabled by default.
 

@@ -14,6 +14,9 @@ from lib.screenlogic_protocol import build_local_login_payload
 
 LOGGER = udi_interface.LOGGER
 
+POST_WRITE_REFRESH_INITIAL_DELAY_SECONDS = 2
+POST_WRITE_REFRESH_SECOND_DELAY_SECONDS = 5
+
 
 @dataclass
 class _CommandToken:
@@ -275,6 +278,17 @@ class ScreenLogicPyClient(ScreenLogicClient):
             if operation is not None:
                 await operation(gateway)
                 if update_after:
+                    LOGGER.info(
+                        "ScreenLogic post-write refresh: waiting %ss before first refresh",
+                        POST_WRITE_REFRESH_INITIAL_DELAY_SECONDS,
+                    )
+                    await asyncio.sleep(POST_WRITE_REFRESH_INITIAL_DELAY_SECONDS)
+                    await gateway.async_update()
+                    LOGGER.info(
+                        "ScreenLogic post-write refresh: waiting %ss before second refresh",
+                        POST_WRITE_REFRESH_SECOND_DELAY_SECONDS,
+                    )
+                    await asyncio.sleep(POST_WRITE_REFRESH_SECOND_DELAY_SECONDS)
                     await gateway.async_update()
             return gateway.get_data()
         finally:

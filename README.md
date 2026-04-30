@@ -24,6 +24,10 @@ Advanced overrides use `OPT_` prefixes, and debug-only settings use
 `DEBUG_` prefixes. Older parameter names are still accepted for backward
 compatibility.
 
+For live PG3 operation, the recommended polling posture is:
+- `shortPoll=180` for normal state refresh in polling modes
+- `longPoll=6000` for infrequent topology and feature inventory refreshes
+
 The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and
 circuits, map heater/solar modes from ScreenLogic data, and expose switchable

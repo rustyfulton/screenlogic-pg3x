@@ -53,7 +53,7 @@ class ControllerNode(udi_interface.Node):
         self.ensure_children()
         if self.startup_refresh:
             self.client.connect()
-            self.refresh_children()
+            self.refresh_children(refresh_topology=True)
 
     def ensure_children(self):
         if self.include_pool_node and self.pool_node is None:
@@ -138,12 +138,15 @@ class ControllerNode(udi_interface.Node):
     def shortPoll(self):
         if not self.poll_enabled:
             return
-        self.refresh_children()
+        LOGGER.info("ScreenLogic shortPoll: refreshing operational state only")
+        self.refresh_children(refresh_topology=False)
 
     def longPoll(self):
+        LOGGER.info("ScreenLogic longPoll: refreshing topology and feature inventory")
         self.setDriver("ST", 1, force=True)
+        self.refresh_topology()
 
-    def refresh_children(self):
+    def refresh_children(self, *, refresh_topology=False):
         state = self.client.get_state()
         if self.pool_node is not None:
             self.pool_node.update_from_state(state)
@@ -153,9 +156,13 @@ class ControllerNode(udi_interface.Node):
             self.solar_thermostat_node.update_from_state(state)
         if self.dummy_thermostat_node is not None:
             self.dummy_thermostat_node.refresh()
-        self.refresh_features()
+        self.refresh_features(discover=refresh_topology)
 
-    def refresh_features(self):
+    def refresh_topology(self):
+        self.ensure_children()
+        self.refresh_features(discover=True)
+
+    def refresh_features(self, *, discover=False):
         if not self.feature_nodes_enabled:
             return
 
@@ -170,6 +177,8 @@ class ControllerNode(udi_interface.Node):
                 continue
             address = self._feature_address(feature.circuit_id)
             if address not in self.feature_nodes:
+                if not discover:
+                    continue
                 node_name = f"{feature.name} ({feature.circuit_id})"
                 LOGGER.info(
                     "Adding ScreenLogic feature node address=%s id=%s name=%s "
@@ -191,7 +200,7 @@ class ControllerNode(udi_interface.Node):
                 )
                 self.feature_nodes[address] = node
                 self.poly.addNode(node)
-            else:
+            elif discover:
                 self._sync_feature_node_name(self.feature_nodes[address], feature)
             self.feature_nodes[address].update_from_feature(feature)
 
@@ -246,12 +255,10 @@ class ControllerNode(udi_interface.Node):
 
     def discover(self, command=None):
         LOGGER.info("ScreenLogic discover invoked")
-        self.ensure_children()
-        self.refresh_features()
+        self.refresh_topology()
 
     def query(self, command=None):
-        self.discover(command)
-        self.refresh_children()
+        self.refresh_children(refresh_topology=True)
 
     commands = {
         "DISCOVER": discover,
