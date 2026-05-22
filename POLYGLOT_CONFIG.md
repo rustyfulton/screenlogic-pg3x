@@ -45,7 +45,8 @@ These are advanced overrides. The node server should run fine without them.
 ### Refresh And Command Timing
 
 - `OPT_refresh_interval_seconds`
-  - Poll interval used by polling modes (`mode=1` and `mode=3`).
+  - Minimum refresh cadence requested by the live client in polling modes.
+  - In practice, automatic refresh timing is still driven by PG3 `shortPoll`.
   - Default is `60`.
 - `OPT_command_interval_seconds`
   - Minimum spacing between write commands.
@@ -105,6 +106,9 @@ for the debug-only configuration surface.
 - Polling is enabled by default only in `mode=1` and `mode=3`.
 - In polling modes, `shortPoll` should be configured as the operational state
   refresh interval. We recommend `shortPoll=180`.
+- If `shortPoll=120`, external changes may take about 2 minutes to appear.
+- `OPT_refresh_interval_seconds` does not override PG3 `shortPoll`; it acts as
+  a client-side minimum refresh floor.
 - `longPoll` should be reserved for infrequent topology and feature inventory
   refreshes. We recommend `longPoll=6000`.
 - Write commands are paced by an internal default of `10` seconds unless

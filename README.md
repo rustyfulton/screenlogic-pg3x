@@ -9,9 +9,9 @@ Current capabilities:
 - fake backend for safe simulation
 - live ScreenLogic backend through `screenlogicpy`
 - discovered ScreenLogic circuit/feature nodes with on/off commands
-- read-only default mode with opt-in writes through `control_enabled`
+- mode-based read-only or read/write behavior
 - conservative command pacing to avoid rapid back-to-back ScreenLogic writes
-- command-only live refresh mode through `poll_enabled=false`
+- command-only live refresh mode through `mode=2`
 - configurable fixed solar nodes for different equipment layouts
 
 Preferred PG3x configuration now centers on a single `mode` parameter:
@@ -26,6 +26,12 @@ Advanced overrides use `OPT_` prefixes, and debug-only settings use
 For live PG3 operation, the recommended polling posture is:
 - `shortPoll=180` for normal state refresh in polling modes
 - `longPoll=6000` for infrequent topology and feature inventory refreshes
+
+Notes:
+- In polling modes, PG3 `shortPoll` is the real driver of automatic refresh
+  timing.
+- `OPT_refresh_interval_seconds` is a client-side minimum refresh floor and
+  does not override PG3 `shortPoll`.
 
 The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and
