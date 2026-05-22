@@ -60,6 +60,7 @@ class NodeServerConfig:
     min_command_seconds: int = 10
     enable_fountain_experiments: bool = False
     enable_pool_temp_experiments: bool = False
+    isolated_thermostat_lab_mode: bool = False
 
     @property
     def use_fake_backend(self) -> bool:
@@ -126,6 +127,15 @@ class NodeServerConfig:
         poll_enabled_default = mode in (0, 1, 3)
         startup_refresh_default = mode != 0
 
+        enable_pool_temp_experiments = _normalize_bool(
+            _first_param(
+                params,
+                "OPT_enable_pool_temp_experiments",
+                "enable_pool_temp_experiments",
+            ),
+            default=False,
+        )
+
         include_dummy_thermostat = _normalize_bool(
             _first_param(
                 params,
@@ -169,8 +179,31 @@ class NodeServerConfig:
             ),
             default=True,
         )
+        feature_nodes_enabled = _normalize_bool(
+            _first_param(
+                params,
+                "OPT_show_features",
+                "show_features",
+                "feature_nodes_enabled",
+            ),
+            default=True,
+        )
         if backend_mode == "screenlogic":
             include_dummy_thermostat = False
+
+        isolated_thermostat_lab_mode = enable_pool_temp_experiments
+        if isolated_thermostat_lab_mode:
+            backend_mode = "fake"
+            control_enabled = True
+            poll_enabled = True
+            startup_refresh = True
+            sync_after_write = True
+            include_pool_node = False
+            include_dummy_thermostat = True
+            include_solar_node = False
+            include_solar_thermostat_node = False
+            feature_nodes_enabled = False
+            enable_pool_temp_experiments = False
 
         return cls(
             mode=mode,
@@ -209,15 +242,7 @@ class NodeServerConfig:
             include_dummy_thermostat=include_dummy_thermostat,
             include_solar_node=include_solar_node,
             include_solar_thermostat_node=include_solar_thermostat_node,
-            feature_nodes_enabled=_normalize_bool(
-                _first_param(
-                    params,
-                    "OPT_show_features",
-                    "show_features",
-                    "feature_nodes_enabled",
-                ),
-                default=True,
-            ),
+            feature_nodes_enabled=feature_nodes_enabled,
             feature_include=_normalize_csv(
                 _first_param(
                     params,
@@ -254,12 +279,6 @@ class NodeServerConfig:
                 ),
                 default=False,
             ),
-            enable_pool_temp_experiments=_normalize_bool(
-                _first_param(
-                    params,
-                    "OPT_enable_pool_temp_experiments",
-                    "enable_pool_temp_experiments",
-                ),
-                default=False,
-            ),
+            enable_pool_temp_experiments=enable_pool_temp_experiments,
+            isolated_thermostat_lab_mode=isolated_thermostat_lab_mode,
         )

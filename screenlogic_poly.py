@@ -101,7 +101,7 @@ class ScreenLogicNodeServer:
             "Received custom params; mode=%s backend=%s host=%s port=%s system_name=%s "
             "auto_refresh=%s show_pool_node=%s show_features=%s "
             "show_solar_heater=%s show_solar_thermostat=%s "
-            "fountain_experiments=%s pool_temp_experiments=%s read_only=%s",
+            "fountain_experiments=%s pool_temp_experiments=%s thermostat_lab_mode=%s read_only=%s",
             self.config.mode,
             self.config.backend_mode,
             self.config.screenlogic_host or "<none>",
@@ -114,6 +114,7 @@ class ScreenLogicNodeServer:
             self.config.include_solar_thermostat_node,
             self.config.enable_fountain_experiments,
             self.config.enable_pool_temp_experiments,
+            self.config.isolated_thermostat_lab_mode,
             not self.config.control_enabled,
         )
         if ENABLE_HARDCODED_DIAGNOSTICS:
@@ -135,7 +136,12 @@ class ScreenLogicNodeServer:
             return FakeScreenLogicClient()
 
         if self.config.use_fake_backend:
-            LOGGER.info("Using fake ScreenLogic backend")
+            if self.config.isolated_thermostat_lab_mode:
+                LOGGER.info(
+                    "Using fake ScreenLogic backend in isolated thermostat lab mode"
+                )
+            else:
+                LOGGER.info("Using fake ScreenLogic backend")
             return FakeScreenLogicClient()
 
         host = self.config.screenlogic_host
@@ -188,6 +194,7 @@ class ScreenLogicNodeServer:
             feature_exclude=self.config.feature_exclude,
             enable_fountain_experiments=self.config.enable_fountain_experiments,
             enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
+            isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
         )
         try:
             if self.config.startup_refresh:
@@ -199,6 +206,31 @@ class ScreenLogicNodeServer:
             self.controller.refresh_children(refresh_topology=True)
 
     def _update_notices(self):
+        if self.config.isolated_thermostat_lab_mode:
+            self._clear_equipment_notices()
+            self._remove_notice("screenlogic_target")
+            self._remove_notice("backend_mode")
+            self._add_notice(
+                {
+                    "backend_mode": (
+                        "Isolated thermostat lab mode enabled. Exposing only the "
+                        "self-primary fake thermostat for Alexa/Portal testing."
+                    )
+                }
+            )
+            self._add_notice(
+                {
+                    "screenlogic_runtime": (
+                        "Runtime: "
+                        f"mode={self.config.mode} "
+                        "thermostat_lab_mode=True "
+                        f"auto_refresh={self.config.poll_enabled} "
+                        f"read_only={not self.config.control_enabled}"
+                    )
+                }
+            )
+            return
+
         if self.config.use_fake_backend:
             self._remove_notice("screenlogic_target")
             self._clear_equipment_notices()
@@ -236,6 +268,7 @@ class ScreenLogicNodeServer:
                     f"show_solar_thermostat={self.config.include_solar_thermostat_node} "
                     f"fountain_experiments={self.config.enable_fountain_experiments} "
                     f"pool_temp_experiments={self.config.enable_pool_temp_experiments} "
+                    f"thermostat_lab_mode={self.config.isolated_thermostat_lab_mode} "
                     f"read_only={not self.config.control_enabled}"
                 )
             }
@@ -261,7 +294,11 @@ class ScreenLogicNodeServer:
             self._remove_notice(key)
 
     def _update_equipment_notices(self):
-        if self.client is None or self.config.use_fake_backend:
+        if (
+            self.client is None
+            or self.config.use_fake_backend
+            or self.config.isolated_thermostat_lab_mode
+        ):
             self._clear_equipment_notices()
             return
 
@@ -344,6 +381,7 @@ class ScreenLogicNodeServer:
             feature_exclude=self.config.feature_exclude,
             enable_fountain_experiments=self.config.enable_fountain_experiments,
             enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
+            isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
         )
         self.polyglot.addNode(self.controller)
         self.controller.start()

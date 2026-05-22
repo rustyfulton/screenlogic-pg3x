@@ -54,6 +54,7 @@ class ControllerNode(udi_interface.Node):
         feature_exclude=(),
         enable_fountain_experiments=False,
         enable_pool_temp_experiments=False,
+        isolated_thermostat_lab_mode=False,
     ):
         super().__init__(polyglot, primary, address, name)
         self.client = client
@@ -68,6 +69,7 @@ class ControllerNode(udi_interface.Node):
         self.feature_exclude = tuple(feature_exclude or ())
         self.enable_fountain_experiments = enable_fountain_experiments
         self.enable_pool_temp_experiments = enable_pool_temp_experiments
+        self.isolated_thermostat_lab_mode = isolated_thermostat_lab_mode
         self.pool_node = None
         self.solar_node = None
         self.solar_thermostat_node = None
@@ -86,6 +88,21 @@ class ControllerNode(udi_interface.Node):
             self.refresh_children(refresh_topology=True)
 
     def ensure_children(self):
+        if self.isolated_thermostat_lab_mode:
+            self._cleanup_for_thermostat_lab_mode()
+            if self.dummy_thermostat_node is None:
+                LOGGER.info(
+                    "Thermostat lab mode: adding self-primary dummy thermostat only"
+                )
+                self.dummy_thermostat_node = DummyThermostatNode(
+                    self.poly,
+                    "dummytstat",
+                    "dummytstat",
+                    "Thermostat Lab",
+                )
+                self.poly.addNode(self.dummy_thermostat_node)
+            return
+
         if self.include_pool_node and self.pool_node is None:
             self.pool_node = PoolNode(
                 self.poly,
@@ -136,6 +153,7 @@ class ControllerNode(udi_interface.Node):
         feature_exclude=None,
         enable_fountain_experiments=None,
         enable_pool_temp_experiments=None,
+        isolated_thermostat_lab_mode=None,
     ):
         self.client = client
         if include_pool_node is not None:
@@ -160,6 +178,8 @@ class ControllerNode(udi_interface.Node):
             self.enable_fountain_experiments = enable_fountain_experiments
         if enable_pool_temp_experiments is not None:
             self.enable_pool_temp_experiments = enable_pool_temp_experiments
+        if isolated_thermostat_lab_mode is not None:
+            self.isolated_thermostat_lab_mode = isolated_thermostat_lab_mode
 
         if self.pool_node is not None:
             self.pool_node.client = client
@@ -189,6 +209,17 @@ class ControllerNode(udi_interface.Node):
         self.refresh_topology()
 
     def refresh_children(self, *, refresh_topology=False):
+        if self.isolated_thermostat_lab_mode:
+            LOGGER.info(
+                "Thermostat lab mode refresh refresh_topology=%s",
+                refresh_topology,
+            )
+            if self.dummy_thermostat_node is not None:
+                self.dummy_thermostat_node.refresh(
+                    {"reason": "thermostat_lab_refresh", "refresh_topology": refresh_topology}
+                )
+            return
+
         state = self.client.get_state()
         if self.pool_node is not None:
             self.pool_node.update_from_state(state)
@@ -318,6 +349,49 @@ class ControllerNode(udi_interface.Node):
                     "Unable to remove retired experimental ScreenLogic feature node %s",
                     address,
                 )
+
+    def _remove_node_if_present(self, address):
+        get_node = getattr(self.poly, "getNode", None)
+        del_node = getattr(self.poly, "delNode", None)
+        if not callable(get_node) or not callable(del_node):
+            return
+        node = get_node(address)
+        if node is None:
+            return
+        LOGGER.info("Thermostat lab mode removing node address=%s", address)
+        try:
+            del_node(address)
+        except Exception:
+            LOGGER.exception("Unable to remove node %s during thermostat lab cleanup", address)
+
+    def _cleanup_for_thermostat_lab_mode(self):
+        for address in tuple(self.experimental_pool_temp_alarm_nodes):
+            self._remove_node_if_present(address)
+        self.experimental_pool_temp_alarm_nodes.clear()
+
+        for address in tuple(self.experimental_pool_temp_main_nodes):
+            self._remove_node_if_present(address)
+        self.experimental_pool_temp_main_nodes.clear()
+
+        for address in tuple(self.experimental_pool_temp_nodes):
+            self._remove_node_if_present(address)
+        self.experimental_pool_temp_nodes.clear()
+
+        for address in tuple(self.feature_nodes):
+            self._remove_node_if_present(address)
+        self.feature_nodes.clear()
+
+        for address in ("pool", "solar", "solartstat"):
+            self._remove_node_if_present(address)
+        self.pool_node = None
+        self.solar_node = None
+        self.solar_thermostat_node = None
+
+        if self.dummy_thermostat_node is not None and getattr(
+            self.dummy_thermostat_node, "primary", None
+        ) != "dummytstat":
+            self._remove_node_if_present("dummytstat")
+            self.dummy_thermostat_node = None
 
     def _refresh_pool_temp_experiments(self, state, *, discover=False):
         if not self.enable_pool_temp_experiments:
