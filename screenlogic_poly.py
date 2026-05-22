@@ -35,6 +35,27 @@ class ScreenLogicNodeServer:
         self.controller = None
         self.diagnostic_thread = None
 
+    def poll_handler(self, polltype):
+        if self.controller is None:
+            return
+        if "shortPoll" in polltype:
+            LOGGER.info("Received PG3 shortPoll event")
+            self.controller.shortPoll()
+        elif "longPoll" in polltype:
+            LOGGER.info("Received PG3 longPoll event")
+            self.controller.longPoll()
+
+    def stop_handler(self):
+        LOGGER.info("Stopping ScreenLogic PG3x node server")
+        if self.controller is not None:
+            try:
+                self.controller.setDriver("ST", 0, force=True)
+            except Exception:
+                LOGGER.exception("Unable to mark controller offline during stop")
+        stop = getattr(self.polyglot, "stop", None)
+        if callable(stop):
+            stop()
+
     def parameter_handler(self, params):
         self.custom_params = params
         self.config = NodeServerConfig.from_params(params)
@@ -244,6 +265,8 @@ class ScreenLogicNodeServer:
         LOGGER.info("Starting ScreenLogic PG3x node server")
         self.polyglot.start()
         self.polyglot.subscribe(self.polyglot.CUSTOMPARAMS, self.parameter_handler)
+        self.polyglot.subscribe(self.polyglot.POLL, self.poll_handler)
+        self.polyglot.subscribe(self.polyglot.STOP, self.stop_handler)
         self.polyglot.ready()
         self.polyglot.setCustomParamsDoc()
         self.polyglot.updateProfile()
