@@ -411,4 +411,17 @@
       </accepts>
     </cmds>
   </nodeDef>
+
+  <nodeDef id="ptemp_pmalarm" nls="ptemp_pmalarm">
+    <sts>
+      <st id="ALARM" editor="I_PM_ALARM" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+      </accepts>
+    </cmds>
+  </nodeDef>
 </nodeDefs>

@@ -15,6 +15,20 @@ class ExperimentalPoolTempBaseNode(udi_interface.Node):
         self.update_from_state(self.client.get_state())
 
 
+class ExperimentalPoolTempPowerAlarmNode(ExperimentalPoolTempBaseNode):
+    id = "ptemp_pmalarm"
+    drivers = [{"driver": "ALARM", "value": 1, "uom": 93}]
+
+    def update_from_state(self, state):
+        value = 1 if getattr(state, "pump_on", False) or getattr(state, "heater_on", False) else 2
+        self.setDriver("ALARM", value, force=True)
+
+    commands = {
+        "QUERY": ExperimentalPoolTempBaseNode.refresh,
+        "REFRESH": ExperimentalPoolTempBaseNode.refresh,
+    }
+
+
 class ExperimentalPoolTempThermostatReadWriteNode(ExperimentalPoolTempBaseNode):
     id = "ptemp_tstat_rw"
     drivers = [

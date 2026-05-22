@@ -6,6 +6,7 @@ from nodes.experimental_pool_temp import (
     ExperimentalPoolTempDocCloneThermostatNode,
     ExperimentalPoolTempFullCloneHintThermostatNode,
     ExperimentalPoolTempFullCloneThermostatNode,
+    ExperimentalPoolTempPowerAlarmNode,
     ExperimentalPoolTempSensorNode,
     ExperimentalPoolTempStrictUdiThermostatNode,
     ExperimentalPoolTempTempSetpointNode,
@@ -74,6 +75,7 @@ class ControllerNode(udi_interface.Node):
         self.feature_nodes = {}
         self.experimental_pool_temp_nodes = {}
         self.experimental_pool_temp_main_nodes = {}
+        self.experimental_pool_temp_alarm_nodes = {}
 
     def start(self):
         LOGGER.info("Starting controller node")
@@ -170,6 +172,8 @@ class ControllerNode(udi_interface.Node):
         for node in self.experimental_pool_temp_nodes.values():
             node.client = client
         for node in self.experimental_pool_temp_main_nodes.values():
+            node.client = client
+        for node in self.experimental_pool_temp_alarm_nodes.values():
             node.client = client
         self.ensure_children()
 
@@ -384,6 +388,55 @@ class ControllerNode(udi_interface.Node):
                 self.experimental_pool_temp_main_nodes[address] = node
                 self.poly.addNode(node)
             node.update_from_state(state)
+
+        family_variants = (
+            ("xptemps", "Pool Temp EXP S Family Doc Hint", ExperimentalPoolTempDocCloneHintThermostatNode),
+            ("xptempt", "Pool Temp EXP T Family Strict UDI", ExperimentalPoolTempStrictUdiThermostatNode),
+            ("xptempu", "Pool Temp EXP U Family Full Hint", ExperimentalPoolTempFullCloneHintThermostatNode),
+        )
+
+        for address, name, node_cls in family_variants:
+            node = self.experimental_pool_temp_main_nodes.get(address)
+            if node is None:
+                if not discover:
+                    continue
+                LOGGER.info(
+                    "Adding experimental thermostat-family main node address=%s class=%s",
+                    address,
+                    node_cls.__name__,
+                )
+                node = node_cls(
+                    self.poly,
+                    address,
+                    address,
+                    name,
+                    self.client,
+                )
+                self.experimental_pool_temp_main_nodes[address] = node
+                self.poly.addNode(node)
+            node.update_from_state(state)
+
+            alarm_address = f"{address}a"
+            alarm_name = f"{name} Power Alarm"
+            alarm_node = self.experimental_pool_temp_alarm_nodes.get(alarm_address)
+            if alarm_node is None:
+                if not discover:
+                    continue
+                LOGGER.info(
+                    "Adding experimental thermostat-family alarm node address=%s primary=%s",
+                    alarm_address,
+                    address,
+                )
+                alarm_node = ExperimentalPoolTempPowerAlarmNode(
+                    self.poly,
+                    address,
+                    alarm_address,
+                    alarm_name,
+                    self.client,
+                )
+                self.experimental_pool_temp_alarm_nodes[alarm_address] = alarm_node
+                self.poly.addNode(alarm_node)
+            alarm_node.update_from_state(state)
 
     def discover(self, command=None):
         LOGGER.info("ScreenLogic discover invoked")
