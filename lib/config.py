@@ -58,6 +58,7 @@ class NodeServerConfig:
     feature_include: tuple[str, ...] = ()
     feature_exclude: tuple[str, ...] = ()
     min_command_seconds: int = 10
+    enable_fountain_experiments: bool = False
 
     @property
     def use_fake_backend(self) -> bool:
@@ -243,5 +244,13 @@ class NodeServerConfig:
                     ),
                     10,
                 ),
+            ),
+            enable_fountain_experiments=_normalize_bool(
+                _first_param(
+                    params,
+                    "OPT_enable_fountain_experiments",
+                    "enable_fountain_experiments",
+                ),
+                default=False,
             ),
         )

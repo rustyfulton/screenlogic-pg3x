@@ -138,4 +138,76 @@
       </accepts>
     </cmds>
   </nodeDef>
+
+  <nodeDef id="fexp_bool_switch" nls="fexp_bool_switch">
+    <sts>
+      <st id="ST" editor="bool" />
+    </sts>
+    <cmds>
+      <sends>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </sends>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="fexp_level_switch" nls="fexp_level_switch">
+    <sts>
+      <st id="ST" editor="onlevel" />
+    </sts>
+    <cmds>
+      <sends>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </sends>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="fexp_bool_light" nls="fexp_bool_light">
+    <sts>
+      <st id="ST" editor="bool" />
+    </sts>
+    <cmds>
+      <sends>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </sends>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
+  <nodeDef id="fexp_level_light" nls="fexp_level_light">
+    <sts>
+      <st id="ST" editor="onlevel" />
+    </sts>
+    <cmds>
+      <sends>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </sends>
+      <accepts>
+        <cmd id="QUERY" />
+        <cmd id="REFRESH" />
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
 </nodeDefs>

@@ -23,6 +23,15 @@
     </range>
   </editor>
 
+  <editor id="onlevel">
+    <range uom="51">
+      <prec>0</prec>
+      <min>0</min>
+      <max>100</max>
+      <step>1</step>
+    </range>
+  </editor>
+
   <editor id="I_TEMP_F">
     <range uom="17" min="-50" max="150" step="0.5" prec="1" />
   </editor>
