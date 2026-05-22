@@ -4,6 +4,8 @@ from nodes.experimental_pool_temp import (
     ExperimentalPoolTempDocCloneHintThermostatNode,
     ExperimentalPoolTempDocClonePracticalThermostatNode,
     ExperimentalPoolTempDocCloneThermostatNode,
+    ExperimentalPoolTempFullCloneHintThermostatNode,
+    ExperimentalPoolTempFullCloneThermostatNode,
     ExperimentalPoolTempSensorNode,
     ExperimentalPoolTempStrictUdiThermostatNode,
     ExperimentalPoolTempTempSetpointNode,
@@ -71,6 +73,7 @@ class ControllerNode(udi_interface.Node):
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
         self.experimental_pool_temp_nodes = {}
+        self.experimental_pool_temp_main_nodes = {}
 
     def start(self):
         LOGGER.info("Starting controller node")
@@ -165,6 +168,8 @@ class ControllerNode(udi_interface.Node):
         for node in self.feature_nodes.values():
             node.client = client
         for node in self.experimental_pool_temp_nodes.values():
+            node.client = client
+        for node in self.experimental_pool_temp_main_nodes.values():
             node.client = client
         self.ensure_children()
 
@@ -347,6 +352,36 @@ class ControllerNode(udi_interface.Node):
                     self.client,
                 )
                 self.experimental_pool_temp_nodes[address] = node
+                self.poly.addNode(node)
+            node.update_from_state(state)
+
+        main_variants = (
+            ("xptempm", "Pool Temp EXP M Main Doc Clone", ExperimentalPoolTempDocCloneThermostatNode),
+            ("xptempn", "Pool Temp EXP N Main Doc Clone Hint", ExperimentalPoolTempDocCloneHintThermostatNode),
+            ("xptempo", "Pool Temp EXP O Main Solar-Style Hint", ExperimentalPoolTempThermostatHintRWNode),
+            ("xptempp", "Pool Temp EXP P Main Strict UDI", ExperimentalPoolTempStrictUdiThermostatNode),
+            ("xptempq", "Pool Temp EXP Q Main Full Clone", ExperimentalPoolTempFullCloneThermostatNode),
+            ("xptempr", "Pool Temp EXP R Main Full Clone Hint", ExperimentalPoolTempFullCloneHintThermostatNode),
+        )
+
+        for address, name, node_cls in main_variants:
+            node = self.experimental_pool_temp_main_nodes.get(address)
+            if node is None:
+                if not discover:
+                    continue
+                LOGGER.info(
+                    "Adding experimental main pool temperature node address=%s class=%s",
+                    address,
+                    node_cls.__name__,
+                )
+                node = node_cls(
+                    self.poly,
+                    address,
+                    address,
+                    name,
+                    self.client,
+                )
+                self.experimental_pool_temp_main_nodes[address] = node
                 self.poly.addNode(node)
             node.update_from_state(state)
 

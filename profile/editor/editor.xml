@@ -59,4 +59,16 @@
   <editor id="I_TSTAT_HCS">
     <range uom="66" subset="0-13" />
   </editor>
+  <editor id="I_TSTAT_HUM">
+    <range uom="22" min="0" max="100" step="0.5" prec="1" />
+  </editor>
+  <editor id="I_TSTAT_FAN_STATE">
+    <range uom="80" subset="0-8" />
+  </editor>
+  <editor id="I_TSTAT_FAN_OVERRIDE">
+    <range uom="81" />
+  </editor>
+  <editor id="I_BAT_PCT">
+    <range uom="51" min="0" max="100" step="1" prec="0" />
+  </editor>
 </editors>
