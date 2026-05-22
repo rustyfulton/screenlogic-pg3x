@@ -150,3 +150,121 @@ class ExperimentalPoolTempTemperatureHintSensorNode(ExperimentalPoolTempSensorNo
 
 class ExperimentalPoolTempTemperatureHintSetpointNode(ExperimentalPoolTempTempSetpointNode):
     hint = "0x05020000"
+
+
+class ExperimentalPoolTempStrictUdiThermostatNode(ExperimentalPoolTempBaseNode):
+    hint = "0x05010000"
+    id = "ptemp_tstat_udi"
+    drivers = [
+        {"driver": "ST", "value": 82, "uom": 17},
+        {"driver": "CLISPH", "value": 84, "uom": 17},
+        {"driver": "CLISPC", "value": 88, "uom": 17},
+        {"driver": "CLIMD", "value": 1, "uom": 67},
+        {"driver": "CLIHCS", "value": 0, "uom": 66},
+    ]
+
+    def __init__(self, polyglot, primary, address, name, client):
+        super().__init__(polyglot, primary, address, name, client)
+        self.cool_setpoint = 88
+        self.mode = 1
+
+    def cmd_set_heat_setpoint(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental strict UDI thermostat: set heat setpoint to %s", raw)
+        state = self.client.set_pool_setpoint(raw)
+        self.update_from_state(state)
+
+    def cmd_set_cool_setpoint(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental strict UDI thermostat: set cool setpoint to %s", raw)
+        self.cool_setpoint = int(raw)
+        self.update_from_state(self.client.get_state())
+
+    def cmd_set_mode(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental strict UDI thermostat: set mode to %s", raw)
+        self.mode = int(raw)
+        self.update_from_state(self.client.get_state())
+
+    def update_from_state(self, state):
+        self.setDriver("ST", state.pool_temp_f, force=True)
+        self.setDriver("CLISPH", state.pool_setpoint_f, force=True)
+        self.setDriver("CLISPC", self.cool_setpoint, force=True)
+        self.setDriver("CLIMD", self.mode, force=True)
+        self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
+
+    commands = {
+        "QUERY": ExperimentalPoolTempBaseNode.refresh,
+        "CLISPH": cmd_set_heat_setpoint,
+        "CLISPC": cmd_set_cool_setpoint,
+        "CLIMD": cmd_set_mode,
+    }
+
+
+class ExperimentalPoolTempDocCloneThermostatNode(ExperimentalPoolTempBaseNode):
+    id = "ptemp_tstat_doc"
+    drivers = [
+        {"driver": "ST", "value": 82, "uom": 17},
+        {"driver": "CLISPH", "value": 84, "uom": 17},
+        {"driver": "CLISPC", "value": 88, "uom": 17},
+        {"driver": "CLIMD", "value": 1, "uom": 67},
+        {"driver": "CLIHCS", "value": 0, "uom": 66},
+    ]
+
+    def __init__(self, polyglot, primary, address, name, client):
+        super().__init__(polyglot, primary, address, name, client)
+        self.cool_setpoint = 88
+        self.mode = 1
+
+    def cmd_set_heat_setpoint(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental doc-clone thermostat: set heat setpoint to %s", raw)
+        state = self.client.set_pool_setpoint(raw)
+        self.update_from_state(state)
+
+    def cmd_set_cool_setpoint(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental doc-clone thermostat: set cool setpoint to %s", raw)
+        self.cool_setpoint = int(raw)
+        self.update_from_state(self.client.get_state())
+
+    def cmd_set_mode(self, command):
+        raw = command.get("value")
+        LOGGER.info("Experimental doc-clone thermostat: set mode to %s", raw)
+        self.mode = int(raw)
+        self.update_from_state(self.client.get_state())
+
+    def update_from_state(self, state):
+        self.setDriver("ST", state.pool_temp_f, force=True)
+        self.setDriver("CLISPH", state.pool_setpoint_f, force=True)
+        self.setDriver("CLISPC", self.cool_setpoint, force=True)
+        self.setDriver("CLIMD", self.mode, force=True)
+        self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
+
+    commands = {
+        "QUERY": ExperimentalPoolTempBaseNode.refresh,
+        "CLISPH": cmd_set_heat_setpoint,
+        "CLISPC": cmd_set_cool_setpoint,
+        "CLIMD": cmd_set_mode,
+    }
+
+
+class ExperimentalPoolTempDocCloneHintThermostatNode(
+    ExperimentalPoolTempDocCloneThermostatNode
+):
+    hint = "0x05010000"
+
+
+class ExperimentalPoolTempDocClonePracticalThermostatNode(
+    ExperimentalPoolTempDocCloneThermostatNode
+):
+    id = "ptemp_tstat_doc_plus"
+    hint = "0x05010000"
+
+    commands = {
+        "QUERY": ExperimentalPoolTempBaseNode.refresh,
+        "REFRESH": ExperimentalPoolTempBaseNode.refresh,
+        "CLISPH": ExperimentalPoolTempDocCloneThermostatNode.cmd_set_heat_setpoint,
+        "CLISPC": ExperimentalPoolTempDocCloneThermostatNode.cmd_set_cool_setpoint,
+        "CLIMD": ExperimentalPoolTempDocCloneThermostatNode.cmd_set_mode,
+    }
