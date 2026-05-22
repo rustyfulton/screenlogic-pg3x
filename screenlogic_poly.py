@@ -12,6 +12,7 @@ from lib.diagnostic_runner import DiagnosticSettings, ScreenLogicDiagnosticRunne
 from lib.fake_screenlogic_client import FakeScreenLogicClient
 from lib.screenlogicpy_client import ScreenLogicPyClient
 from nodes.controller import ControllerNode
+from nodes.thermostat_lab_controller import ThermostatLabControllerNode
 
 LOGGER = udi_interface.LOGGER
 PARAM_CACHE_PATH = Path("custom_params_cache.json")
@@ -364,25 +365,37 @@ class ScreenLogicNodeServer:
         self._update_notices()
         self.client = self._build_client()
 
-        self.controller = ControllerNode(
-            self.polyglot,
-            "controller",
-            "controller",
-            "ScreenLogic Pool Controller",
-            self.client,
-            include_pool_node=self.config.include_pool_node,
-            include_dummy_thermostat=self.config.include_dummy_thermostat,
-            startup_refresh=self.config.startup_refresh,
-            poll_enabled=self.config.poll_enabled,
-            include_solar_node=self.config.include_solar_node,
-            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
-            feature_nodes_enabled=self.config.feature_nodes_enabled,
-            feature_include=self.config.feature_include,
-            feature_exclude=self.config.feature_exclude,
-            enable_fountain_experiments=self.config.enable_fountain_experiments,
-            enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
-            isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
-        )
+        if self.config.isolated_thermostat_lab_mode:
+            LOGGER.info(
+                "Creating thermostat lab controller as the root node at address=controller"
+            )
+            self.controller = ThermostatLabControllerNode(
+                self.polyglot,
+                "controller",
+                "controller",
+                "Thermostat Lab",
+                self.client,
+            )
+        else:
+            self.controller = ControllerNode(
+                self.polyglot,
+                "controller",
+                "controller",
+                "ScreenLogic Pool Controller",
+                self.client,
+                include_pool_node=self.config.include_pool_node,
+                include_dummy_thermostat=self.config.include_dummy_thermostat,
+                startup_refresh=self.config.startup_refresh,
+                poll_enabled=self.config.poll_enabled,
+                include_solar_node=self.config.include_solar_node,
+                include_solar_thermostat_node=self.config.include_solar_thermostat_node,
+                feature_nodes_enabled=self.config.feature_nodes_enabled,
+                feature_include=self.config.feature_include,
+                feature_exclude=self.config.feature_exclude,
+                enable_fountain_experiments=self.config.enable_fountain_experiments,
+                enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
+                isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
+            )
         self.polyglot.addNode(self.controller)
         self.controller.start()
         self._update_equipment_notices()
