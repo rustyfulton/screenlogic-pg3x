@@ -9,10 +9,31 @@ class ExperimentalPoolTempBaseNode(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
         self.client = client
+        LOGGER.info(
+            "Experimental pool temp node created address=%s primary=%s id=%s hint=%s",
+            self.address,
+            primary,
+            getattr(self, "id", "<unknown>"),
+            getattr(self, "hint", None),
+        )
 
     def refresh(self, command=None):
-        LOGGER.info("Refreshing experimental pool temperature node %s", self.address)
-        self.update_from_state(self.client.get_state())
+        LOGGER.info(
+            "Refreshing experimental pool temperature node address=%s command=%s",
+            self.address,
+            command,
+        )
+        state = self.client.get_state()
+        self.update_from_state(state)
+
+    def _log_snapshot(self, label, **values):
+        joined = " ".join(f"{key}={value}" for key, value in values.items())
+        LOGGER.info(
+            "Experimental pool temp node %s address=%s %s",
+            label,
+            self.address,
+            joined,
+        )
 
 
 class ExperimentalPoolTempPowerAlarmNode(ExperimentalPoolTempBaseNode):
@@ -232,21 +253,57 @@ class ExperimentalPoolTempDocCloneThermostatNode(ExperimentalPoolTempBaseNode):
 
     def cmd_set_heat_setpoint(self, command):
         raw = command.get("value")
-        LOGGER.info("Experimental doc-clone thermostat: set heat setpoint to %s", raw)
+        self._log_snapshot(
+            "command.CLISPH.before",
+            payload=command,
+            heat_sp=self.drivers[1]["value"],
+            cool_sp=self.cool_setpoint,
+            mode=self.mode,
+        )
         state = self.client.set_pool_setpoint(raw)
         self.update_from_state(state)
+        self._log_snapshot(
+            "command.CLISPH.after",
+            heat_sp=self.getDriver("CLISPH"),
+            cool_sp=self.getDriver("CLISPC"),
+            mode=self.getDriver("CLIMD"),
+        )
 
     def cmd_set_cool_setpoint(self, command):
         raw = command.get("value")
-        LOGGER.info("Experimental doc-clone thermostat: set cool setpoint to %s", raw)
+        self._log_snapshot(
+            "command.CLISPC.before",
+            payload=command,
+            heat_sp=self.getDriver("CLISPH"),
+            cool_sp=self.cool_setpoint,
+            mode=self.mode,
+        )
         self.cool_setpoint = int(raw)
         self.update_from_state(self.client.get_state())
+        self._log_snapshot(
+            "command.CLISPC.after",
+            heat_sp=self.getDriver("CLISPH"),
+            cool_sp=self.getDriver("CLISPC"),
+            mode=self.getDriver("CLIMD"),
+        )
 
     def cmd_set_mode(self, command):
         raw = command.get("value")
-        LOGGER.info("Experimental doc-clone thermostat: set mode to %s", raw)
+        self._log_snapshot(
+            "command.CLIMD.before",
+            payload=command,
+            heat_sp=self.getDriver("CLISPH"),
+            cool_sp=self.getDriver("CLISPC"),
+            mode=self.mode,
+        )
         self.mode = int(raw)
         self.update_from_state(self.client.get_state())
+        self._log_snapshot(
+            "command.CLIMD.after",
+            heat_sp=self.getDriver("CLISPH"),
+            cool_sp=self.getDriver("CLISPC"),
+            mode=self.getDriver("CLIMD"),
+        )
 
     def update_from_state(self, state):
         self.setDriver("ST", state.pool_temp_f, force=True)
@@ -254,6 +311,14 @@ class ExperimentalPoolTempDocCloneThermostatNode(ExperimentalPoolTempBaseNode):
         self.setDriver("CLISPC", self.cool_setpoint, force=True)
         self.setDriver("CLIMD", self.mode, force=True)
         self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
+        self._log_snapshot(
+            "publish",
+            temp=state.pool_temp_f,
+            heat_sp=state.pool_setpoint_f,
+            cool_sp=self.cool_setpoint,
+            mode=self.mode,
+            hcs=1 if state.heater_on else 0,
+        )
 
     commands = {
         "QUERY": ExperimentalPoolTempBaseNode.refresh,
