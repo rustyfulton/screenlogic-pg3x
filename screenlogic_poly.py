@@ -101,7 +101,7 @@ class ScreenLogicNodeServer:
             "Received custom params; mode=%s backend=%s host=%s port=%s system_name=%s "
             "auto_refresh=%s show_pool_node=%s show_features=%s "
             "show_solar_heater=%s show_solar_thermostat=%s "
-            "fountain_experiments=%s read_only=%s",
+            "fountain_experiments=%s pool_temp_experiments=%s read_only=%s",
             self.config.mode,
             self.config.backend_mode,
             self.config.screenlogic_host or "<none>",
@@ -113,6 +113,7 @@ class ScreenLogicNodeServer:
             self.config.include_solar_node,
             self.config.include_solar_thermostat_node,
             self.config.enable_fountain_experiments,
+            self.config.enable_pool_temp_experiments,
             not self.config.control_enabled,
         )
         if ENABLE_HARDCODED_DIAGNOSTICS:
@@ -186,6 +187,7 @@ class ScreenLogicNodeServer:
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
             enable_fountain_experiments=self.config.enable_fountain_experiments,
+            enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
         )
         try:
             if self.config.startup_refresh:
@@ -233,6 +235,7 @@ class ScreenLogicNodeServer:
                     f"show_solar_heater={self.config.include_solar_node} "
                     f"show_solar_thermostat={self.config.include_solar_thermostat_node} "
                     f"fountain_experiments={self.config.enable_fountain_experiments} "
+                    f"pool_temp_experiments={self.config.enable_pool_temp_experiments} "
                     f"read_only={not self.config.control_enabled}"
                 )
             }
@@ -340,6 +343,7 @@ class ScreenLogicNodeServer:
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
             enable_fountain_experiments=self.config.enable_fountain_experiments,
+            enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
         )
         self.polyglot.addNode(self.controller)
         self.controller.start()

@@ -1,5 +1,11 @@
 import udi_interface
 
+from nodes.experimental_pool_temp import (
+    ExperimentalPoolTempSensorNode,
+    ExperimentalPoolTempTempSetpointNode,
+    ExperimentalPoolTempThermostatReadOnlyNode,
+    ExperimentalPoolTempThermostatReadWriteNode,
+)
 from nodes.feature import FeatureNode
 from nodes.pool import PoolNode
 from nodes.dummy_thermostat import DummyThermostatNode
@@ -36,6 +42,7 @@ class ControllerNode(udi_interface.Node):
         feature_include=(),
         feature_exclude=(),
         enable_fountain_experiments=False,
+        enable_pool_temp_experiments=False,
     ):
         super().__init__(polyglot, primary, address, name)
         self.client = client
@@ -49,11 +56,13 @@ class ControllerNode(udi_interface.Node):
         self.feature_include = tuple(feature_include or ())
         self.feature_exclude = tuple(feature_exclude or ())
         self.enable_fountain_experiments = enable_fountain_experiments
+        self.enable_pool_temp_experiments = enable_pool_temp_experiments
         self.pool_node = None
         self.solar_node = None
         self.solar_thermostat_node = None
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
+        self.experimental_pool_temp_nodes = {}
 
     def start(self):
         LOGGER.info("Starting controller node")
@@ -113,6 +122,7 @@ class ControllerNode(udi_interface.Node):
         feature_include=None,
         feature_exclude=None,
         enable_fountain_experiments=None,
+        enable_pool_temp_experiments=None,
     ):
         self.client = client
         if include_pool_node is not None:
@@ -135,6 +145,8 @@ class ControllerNode(udi_interface.Node):
             self.feature_exclude = tuple(feature_exclude or ())
         if enable_fountain_experiments is not None:
             self.enable_fountain_experiments = enable_fountain_experiments
+        if enable_pool_temp_experiments is not None:
+            self.enable_pool_temp_experiments = enable_pool_temp_experiments
 
         if self.pool_node is not None:
             self.pool_node.client = client
@@ -143,6 +155,8 @@ class ControllerNode(udi_interface.Node):
         if self.solar_thermostat_node is not None:
             self.solar_thermostat_node.client = client
         for node in self.feature_nodes.values():
+            node.client = client
+        for node in self.experimental_pool_temp_nodes.values():
             node.client = client
         self.ensure_children()
 
@@ -161,6 +175,7 @@ class ControllerNode(udi_interface.Node):
         state = self.client.get_state()
         if self.pool_node is not None:
             self.pool_node.update_from_state(state)
+        self._refresh_pool_temp_experiments(state, discover=refresh_topology)
         if self.solar_node is not None:
             self.solar_node.update_from_state(state)
         if self.solar_thermostat_node is not None:
@@ -286,6 +301,38 @@ class ControllerNode(udi_interface.Node):
                     "Unable to remove retired experimental ScreenLogic feature node %s",
                     address,
                 )
+
+    def _refresh_pool_temp_experiments(self, state, *, discover=False):
+        if not self.enable_pool_temp_experiments:
+            return
+
+        variants = (
+            ("xptempa", "Pool Temp EXP A Thermostat RW", ExperimentalPoolTempThermostatReadWriteNode),
+            ("xptempb", "Pool Temp EXP B Thermostat RO", ExperimentalPoolTempThermostatReadOnlyNode),
+            ("xptempc", "Pool Temp EXP C Temp Sensor", ExperimentalPoolTempSensorNode),
+            ("xptempd", "Pool Temp EXP D Temp+Setpoint", ExperimentalPoolTempTempSetpointNode),
+        )
+
+        for address, name, node_cls in variants:
+            node = self.experimental_pool_temp_nodes.get(address)
+            if node is None:
+                if not discover:
+                    continue
+                LOGGER.info(
+                    "Adding experimental pool temperature node address=%s class=%s",
+                    address,
+                    node_cls.__name__,
+                )
+                node = node_cls(
+                    self.poly,
+                    self.address,
+                    address,
+                    name,
+                    self.client,
+                )
+                self.experimental_pool_temp_nodes[address] = node
+                self.poly.addNode(node)
+            node.update_from_state(state)
 
     def discover(self, command=None):
         LOGGER.info("ScreenLogic discover invoked")
