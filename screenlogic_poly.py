@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import json
 import sys
 import threading
+from pathlib import Path
 
 import udi_interface
 
@@ -12,6 +14,7 @@ from lib.screenlogicpy_client import ScreenLogicPyClient
 from nodes.controller import ControllerNode
 
 LOGGER = udi_interface.LOGGER
+PARAM_CACHE_PATH = Path("custom_params_cache.json")
 
 ENABLE_HARDCODED_DIAGNOSTICS = False
 ENABLE_HARDCODED_RUNTIME_DEFAULTS = False
@@ -34,6 +37,40 @@ class ScreenLogicNodeServer:
         self.client = None
         self.controller = None
         self.diagnostic_thread = None
+
+    def _load_cached_custom_params(self):
+        if not PARAM_CACHE_PATH.exists():
+            return {}
+        try:
+            with PARAM_CACHE_PATH.open("r", encoding="utf-8") as handle:
+                data = json.load(handle)
+            if isinstance(data, dict):
+                LOGGER.info(
+                    "Loaded cached custom params from %s",
+                    PARAM_CACHE_PATH.resolve(),
+                )
+                return data
+            LOGGER.warning(
+                "Ignoring cached custom params in %s because the payload is not a mapping",
+                PARAM_CACHE_PATH.resolve(),
+            )
+        except Exception:
+            LOGGER.exception("Unable to load cached custom params from disk")
+        return {}
+
+    def _save_cached_custom_params(self, params):
+        if not isinstance(params, dict) or not params:
+            return
+        try:
+            with PARAM_CACHE_PATH.open("w", encoding="utf-8") as handle:
+                json.dump(params, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+            LOGGER.info(
+                "Saved custom params cache to %s",
+                PARAM_CACHE_PATH.resolve(),
+            )
+        except Exception:
+            LOGGER.exception("Unable to save cached custom params to disk")
 
     def poll_handler(self, polltype):
         if self.controller is None:
@@ -58,6 +95,7 @@ class ScreenLogicNodeServer:
 
     def parameter_handler(self, params):
         self.custom_params = params
+        self._save_cached_custom_params(params)
         self.config = NodeServerConfig.from_params(params)
         LOGGER.info(
             "Received custom params; mode=%s backend=%s host=%s port=%s system_name=%s "
@@ -274,6 +312,14 @@ class ScreenLogicNodeServer:
         self.polyglot.ready()
         self.polyglot.setCustomParamsDoc()
         self.polyglot.updateProfile()
+        if not self.custom_params:
+            cached_params = self._load_cached_custom_params()
+            if cached_params:
+                self.custom_params = cached_params
+                self.config = NodeServerConfig.from_params(cached_params)
+                LOGGER.info(
+                    "Bootstrapping runtime config from cached custom params while waiting for PG3"
+                )
         self.config = NodeServerConfig.from_params(self.custom_params)
         self._update_notices()
         self.client = self._build_client()
