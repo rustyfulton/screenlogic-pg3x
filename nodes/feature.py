@@ -41,6 +41,8 @@ class FeatureNode(udi_interface.Node):
     commands = {
         "QUERY": refresh,
         "REFRESH": refresh,
+        "DON": cmd_feature_on,
+        "DOF": cmd_feature_off,
         "FEATURE_ON": cmd_feature_on,
         "FEATURE_OFF": cmd_feature_off,
     }
