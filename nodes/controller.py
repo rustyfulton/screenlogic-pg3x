@@ -1,18 +1,18 @@
 import udi_interface
 
 from nodes.feature import FeatureNode
-from nodes.experimental_feature import (
-    ExperimentalFeatureBoolLightNode,
-    ExperimentalFeatureBoolSwitchNode,
-    ExperimentalFeatureLevelLightNode,
-    ExperimentalFeatureLevelSwitchNode,
-)
 from nodes.pool import PoolNode
 from nodes.dummy_thermostat import DummyThermostatNode
 from nodes.solar_heater import SolarHeaterNode
 from nodes.solar_thermostat import SolarThermostatNode
 
 LOGGER = udi_interface.LOGGER
+EXPERIMENTAL_FEATURE_ADDRESSES = (
+    "xfeat510a",
+    "xfeat510b",
+    "xfeat510c",
+    "xfeat510d",
+)
 
 
 class ControllerNode(udi_interface.Node):
@@ -54,7 +54,6 @@ class ControllerNode(udi_interface.Node):
         self.solar_thermostat_node = None
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
-        self.experimental_feature_nodes = {}
 
     def start(self):
         LOGGER.info("Starting controller node")
@@ -145,8 +144,6 @@ class ControllerNode(udi_interface.Node):
             self.solar_thermostat_node.client = client
         for node in self.feature_nodes.values():
             node.client = client
-        for node in self.experimental_feature_nodes.values():
-            node.client = client
         self.ensure_children()
 
     def shortPoll(self):
@@ -177,6 +174,7 @@ class ControllerNode(udi_interface.Node):
         self.refresh_features(discover=True)
 
     def refresh_features(self, *, discover=False):
+        self._cleanup_experimental_feature_nodes()
         if not self.feature_nodes_enabled:
             return
 
@@ -217,7 +215,6 @@ class ControllerNode(udi_interface.Node):
             elif discover:
                 self._sync_feature_node_name(self.feature_nodes[address], feature)
             self.feature_nodes[address].update_from_feature(feature)
-            self._refresh_experimental_feature_nodes(feature, discover=discover)
 
     def _feature_allowed(self, feature):
         name = str(feature.name).strip()
@@ -268,40 +265,27 @@ class ControllerNode(udi_interface.Node):
                     node.address,
                 )
 
-    def _refresh_experimental_feature_nodes(self, feature, *, discover=False):
-        if not self.enable_fountain_experiments:
-            return
-        if int(feature.circuit_id) != 510:
+    def _cleanup_experimental_feature_nodes(self):
+        get_node = getattr(self.poly, "getNode", None)
+        del_node = getattr(self.poly, "delNode", None)
+        if not callable(get_node) or not callable(del_node):
             return
 
-        variants = (
-            ("xfeat510a", "Fountain EXP A Bool Switch", ExperimentalFeatureBoolSwitchNode),
-            ("xfeat510b", "Fountain EXP B Level Switch", ExperimentalFeatureLevelSwitchNode),
-            ("xfeat510c", "Fountain EXP C Bool Light", ExperimentalFeatureBoolLightNode),
-            ("xfeat510d", "Fountain EXP D Level Light", ExperimentalFeatureLevelLightNode),
-        )
-        for address, name, node_cls in variants:
-            node = self.experimental_feature_nodes.get(address)
+        for address in EXPERIMENTAL_FEATURE_ADDRESSES:
+            node = get_node(address)
             if node is None:
-                if not discover:
-                    continue
-                LOGGER.info(
-                    "Adding experimental ScreenLogic feature node address=%s source_id=%s class=%s",
+                continue
+            LOGGER.info(
+                "Removing retired experimental ScreenLogic feature node address=%s",
+                address,
+            )
+            try:
+                del_node(address)
+            except Exception:
+                LOGGER.exception(
+                    "Unable to remove retired experimental ScreenLogic feature node %s",
                     address,
-                    feature.circuit_id,
-                    node_cls.__name__,
                 )
-                node = node_cls(
-                    self.poly,
-                    self.address,
-                    address,
-                    name,
-                    self.client,
-                    feature.circuit_id,
-                )
-                self.experimental_feature_nodes[address] = node
-                self.poly.addNode(node)
-            node.update_from_feature(feature)
 
     def discover(self, command=None):
         LOGGER.info("ScreenLogic discover invoked")
