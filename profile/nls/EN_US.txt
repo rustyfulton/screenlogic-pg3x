@@ -1,4 +1,5 @@
 ND-poolctl-NAME = ScreenLogic Controller
+ND-Thermostat-NAME = Thermostat
 ND-pool-NAME = Pool
 ND-solarhtr-NAME = Solar Heater
 ND-solartstat-NAME = Solar Thermostat
@@ -19,6 +20,11 @@ ND-ptemp_tstat_full-NAME = Pool Temp Full Clone Thermostat
 ND-ptemp_pmalarm-NAME = Power Alarm
 
 ST-poolctl-ST-NAME = Online
+ST-143-ST-NAME = Current Temperature
+ST-143-CLISPH-NAME = Heat Setpoint
+ST-143-CLISPC-NAME = Cool Setpoint
+ST-143-CLIMD-NAME = Mode
+ST-143-CLIHCS-NAME = Heat/Cool State
 ST-pool-ST-NAME = Connected
 ST-pool-GV0-NAME = Pool Temperature
 ST-pool-GV1-NAME = Spa Temperature
@@ -92,6 +98,16 @@ ST-dummytstat-CLIFS-NAME = Fan Mode
 
 CMD-poolctl-DISCOVER-NAME = Discover
 CMD-poolctl-QUERY-NAME = Query
+CMD-143-QUERY-NAME = Query
+CMD-143-CLISPH-NAME = Set Heat Setpoint
+CMDPN-143-CLISPH-NAME = Heat Setpoint
+CMDP-143-I_CLISPH_F-CLISPH-NAME = Heat Setpoint
+CMD-143-CLISPC-NAME = Set Cool Setpoint
+CMDPN-143-CLISPC-NAME = Cool Setpoint
+CMDP-143-I_CLISPC_F-CLISPC-NAME = Cool Setpoint
+CMD-143-CLIMD-NAME = Set Mode
+CMDPN-143-CLIMD-NAME = Mode
+CMDP-143-I_TSTAT_MODE-CLIMD-NAME = Mode
 CMD-pool-QUERY-NAME = Query
 CMD-pool-REFRESH-NAME = Refresh
 CMD-pool-PUMP_ON-NAME = Pump On
