@@ -39,6 +39,82 @@ class ScreenLogicNodeServer:
         self.controller = None
         self.diagnostic_thread = None
 
+    def _make_controller(self):
+        if self.config.isolated_thermostat_lab_mode:
+            LOGGER.info(
+                "Creating thermostat lab controller as the root node at address=controller"
+            )
+            return ThermostatLabControllerNode(
+                self.polyglot,
+                "controller",
+                "controller",
+                "Thermostat Lab",
+                self.client,
+            )
+
+        return ControllerNode(
+            self.polyglot,
+            "controller",
+            "controller",
+            "ScreenLogic Pool Controller",
+            self.client,
+            include_pool_node=self.config.include_pool_node,
+            include_dummy_thermostat=self.config.include_dummy_thermostat,
+            startup_refresh=self.config.startup_refresh,
+            poll_enabled=self.config.poll_enabled,
+            include_solar_node=self.config.include_solar_node,
+            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
+            feature_nodes_enabled=self.config.feature_nodes_enabled,
+            feature_include=self.config.feature_include,
+            feature_exclude=self.config.feature_exclude,
+            enable_fountain_experiments=self.config.enable_fountain_experiments,
+            enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
+            isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
+        )
+
+    def _remove_node_if_present(self, address):
+        get_node = getattr(self.polyglot, "getNode", None)
+        del_node = getattr(self.polyglot, "delNode", None)
+        if not callable(get_node) or not callable(del_node):
+            return
+        node = get_node(address)
+        if node is None:
+            return
+        LOGGER.info("Removing node during controller mode switch address=%s", address)
+        try:
+            del_node(address)
+        except Exception:
+            LOGGER.exception(
+                "Unable to remove node %s during controller mode switch",
+                address,
+            )
+
+    def _controller_matches_runtime_mode(self):
+        if self.controller is None:
+            return False
+        if self.config.isolated_thermostat_lab_mode:
+            return isinstance(self.controller, ThermostatLabControllerNode)
+        return isinstance(self.controller, ControllerNode)
+
+    def _recreate_controller_for_runtime_mode(self):
+        LOGGER.info(
+            "Recreating controller for runtime mode thermostat_lab_mode=%s",
+            self.config.isolated_thermostat_lab_mode,
+        )
+        for address in (
+            "controllera",
+            "controller",
+            "labtstata",
+            "labtstat",
+            "pool",
+            "solar",
+            "solartstat",
+        ):
+            self._remove_node_if_present(address)
+        self.controller = self._make_controller()
+        self.polyglot.addNode(self.controller)
+        self.controller.start()
+
     def _load_cached_custom_params(self):
         if not PARAM_CACHE_PATH.exists():
             return {}
@@ -182,6 +258,8 @@ class ScreenLogicNodeServer:
     def _rebuild_client(self):
         LOGGER.info("Rebuilding backend client from latest custom parameters")
         self.client = self._build_client()
+        if not self._controller_matches_runtime_mode():
+            self._recreate_controller_for_runtime_mode()
         self.controller.set_client(
             self.client,
             include_pool_node=self.config.include_pool_node,
@@ -364,38 +442,7 @@ class ScreenLogicNodeServer:
         self.config = NodeServerConfig.from_params(self.custom_params)
         self._update_notices()
         self.client = self._build_client()
-
-        if self.config.isolated_thermostat_lab_mode:
-            LOGGER.info(
-                "Creating thermostat lab controller as the root node at address=controller"
-            )
-            self.controller = ThermostatLabControllerNode(
-                self.polyglot,
-                "controller",
-                "controller",
-                "Thermostat Lab",
-                self.client,
-            )
-        else:
-            self.controller = ControllerNode(
-                self.polyglot,
-                "controller",
-                "controller",
-                "ScreenLogic Pool Controller",
-                self.client,
-                include_pool_node=self.config.include_pool_node,
-                include_dummy_thermostat=self.config.include_dummy_thermostat,
-                startup_refresh=self.config.startup_refresh,
-                poll_enabled=self.config.poll_enabled,
-                include_solar_node=self.config.include_solar_node,
-                include_solar_thermostat_node=self.config.include_solar_thermostat_node,
-                feature_nodes_enabled=self.config.feature_nodes_enabled,
-                feature_include=self.config.feature_include,
-                feature_exclude=self.config.feature_exclude,
-                enable_fountain_experiments=self.config.enable_fountain_experiments,
-                enable_pool_temp_experiments=self.config.enable_pool_temp_experiments,
-                isolated_thermostat_lab_mode=self.config.isolated_thermostat_lab_mode,
-            )
+        self.controller = self._make_controller()
         self.polyglot.addNode(self.controller)
         self.controller.start()
         self._update_equipment_notices()

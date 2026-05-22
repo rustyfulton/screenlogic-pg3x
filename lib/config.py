@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+PLACEHOLDER_SCREENLOGIC_SYSTEM_NAME = "Pentair: F1-11-11"
+
+
 def _first_param(params: dict, *keys):
     for key in keys:
         if key in params and params.get(key) not in (None, ""):
@@ -191,7 +194,20 @@ class NodeServerConfig:
         if backend_mode == "screenlogic":
             include_dummy_thermostat = False
 
-        isolated_thermostat_lab_mode = enable_pool_temp_experiments
+        screenlogic_system_name = str(
+            _first_param(
+                params,
+                "screenlogic_system_name",
+                "screenlogic_name",
+            )
+            or ""
+        ).strip()
+
+        isolated_thermostat_lab_mode = (
+            enable_pool_temp_experiments
+            or not params
+            or screenlogic_system_name == PLACEHOLDER_SCREENLOGIC_SYSTEM_NAME
+        )
         if isolated_thermostat_lab_mode:
             backend_mode = "fake"
             control_enabled = True
@@ -208,14 +224,7 @@ class NodeServerConfig:
         return cls(
             mode=mode,
             backend_mode=backend_mode,
-            screenlogic_system_name=str(
-                _first_param(
-                    params,
-                    "screenlogic_system_name",
-                    "screenlogic_name",
-                )
-                or ""
-            ).strip(),
+            screenlogic_system_name=screenlogic_system_name,
             screenlogic_host=str(_first_param(params, "screenlogic_host") or "").strip(),
             screenlogic_port=_normalize_int(_first_param(params, "screenlogic_port"), 0),
             screenlogic_password=str(
