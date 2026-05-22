@@ -4,6 +4,8 @@ LOGGER = udi_interface.LOGGER
 
 
 class ExperimentalPoolTempBaseNode(udi_interface.Node):
+    hint = None
+
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
         self.client = client
@@ -132,3 +134,19 @@ class ExperimentalPoolTempTempSetpointNode(ExperimentalPoolTempBaseNode):
         "REFRESH": ExperimentalPoolTempBaseNode.refresh,
         "CLISPH": cmd_set_heat_setpoint,
     }
+
+
+class ExperimentalPoolTempThermostatHintRWNode(ExperimentalPoolTempThermostatReadWriteNode):
+    hint = "0x05010000"
+
+
+class ExperimentalPoolTempThermostatHintRONode(ExperimentalPoolTempThermostatReadOnlyNode):
+    hint = "0x05010000"
+
+
+class ExperimentalPoolTempTemperatureHintSensorNode(ExperimentalPoolTempSensorNode):
+    hint = "0x05020000"
+
+
+class ExperimentalPoolTempTemperatureHintSetpointNode(ExperimentalPoolTempTempSetpointNode):
+    hint = "0x05020000"

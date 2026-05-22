@@ -3,6 +3,10 @@ import udi_interface
 from nodes.experimental_pool_temp import (
     ExperimentalPoolTempSensorNode,
     ExperimentalPoolTempTempSetpointNode,
+    ExperimentalPoolTempTemperatureHintSensorNode,
+    ExperimentalPoolTempTemperatureHintSetpointNode,
+    ExperimentalPoolTempThermostatHintRONode,
+    ExperimentalPoolTempThermostatHintRWNode,
     ExperimentalPoolTempThermostatReadOnlyNode,
     ExperimentalPoolTempThermostatReadWriteNode,
 )
@@ -311,6 +315,10 @@ class ControllerNode(udi_interface.Node):
             ("xptempb", "Pool Temp EXP B Thermostat RO", ExperimentalPoolTempThermostatReadOnlyNode),
             ("xptempc", "Pool Temp EXP C Temp Sensor", ExperimentalPoolTempSensorNode),
             ("xptempd", "Pool Temp EXP D Temp+Setpoint", ExperimentalPoolTempTempSetpointNode),
+            ("xptempe", "Pool Temp EXP E Tstat Hint RW", ExperimentalPoolTempThermostatHintRWNode),
+            ("xptempf", "Pool Temp EXP F Tstat Hint RO", ExperimentalPoolTempThermostatHintRONode),
+            ("xptempg", "Pool Temp EXP G Temp Hint Sensor", ExperimentalPoolTempTemperatureHintSensorNode),
+            ("xptemph", "Pool Temp EXP H Temp Hint Setpoint", ExperimentalPoolTempTemperatureHintSetpointNode),
         )
 
         for address, name, node_cls in variants:
