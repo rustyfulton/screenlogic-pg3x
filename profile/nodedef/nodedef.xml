@@ -84,7 +84,7 @@
       <st id="CLIMD" editor="I_TSTAT_MODE" />
       <st id="CLIFS" editor="I_TSTAT_FAN_MODE" />
       <st id="CLIHUM" editor="I_HUMIDITY" />
-      <st id="CLIHCS" editor="I_TSTAT_ECOHCS" />
+      <st id="CLIHCS" editor="I_TSTAT_HCS" />
       <st id="CLIFRS" editor="I_TSTAT_FAN_STATE" />
       <st id="GV1" editor="I_TSTAT_HUM_SET" />
       <st id="CLISMD" editor="I_TSTAT_PROG_MODE2" />

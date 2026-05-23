@@ -13,7 +13,7 @@ class EcobeeLabThermostatNode(udi_interface.Node):
         {"driver": "CLIMD", "value": 2, "uom": 67},
         {"driver": "CLIFS", "value": 0, "uom": 68},
         {"driver": "CLIHUM", "value": 50, "uom": 22},
-        {"driver": "CLIHCS", "value": 2, "uom": 25},
+        {"driver": "CLIHCS", "value": 2, "uom": 66},
         {"driver": "CLIFRS", "value": 1, "uom": 80},
         {"driver": "GV1", "value": 45, "uom": 22},
         {"driver": "CLISMD", "value": 0, "uom": 25},
