@@ -11,6 +11,8 @@ class PoolThermostatNode(udi_interface.Node):
         {"driver": "CLIMD", "value": 1, "uom": 67},
         {"driver": "CLISPC", "value": 88.0, "uom": 17},
         {"driver": "CLISPH", "value": 84.0, "uom": 17},
+        {"driver": "CLIHCS", "value": 0, "uom": 66},
+        {"driver": "CLIFS", "value": 0, "uom": 68},
     ]
 
     def __init__(self, polyglot, primary, address, name, client):
@@ -18,6 +20,7 @@ class PoolThermostatNode(udi_interface.Node):
         self.client = client
         self.cool_setpoint = 88
         self.mode = 1
+        self.fan_mode = 0
 
     def _encode_temp(self, value):
         return round(float(value), 1)
@@ -46,15 +49,27 @@ class PoolThermostatNode(udi_interface.Node):
             LOGGER.warning("Ignoring invalid pool thermostat mode payload=%s", raw)
         self.update_from_state(self.client.get_state())
 
+    def cmd_set_fan_mode(self, command):
+        raw = command.get("value")
+        LOGGER.info("ScreenLogic pool thermostat command: set fan mode to %s", raw)
+        try:
+            self.fan_mode = int(raw)
+        except (TypeError, ValueError):
+            LOGGER.warning("Ignoring invalid pool thermostat fan payload=%s", raw)
+        self.update_from_state(self.client.get_state())
+
     def update_from_state(self, state):
         self.setDriver("ST", self._encode_temp(state.pool_temp_f), force=True)
         self.setDriver("CLISPH", self._encode_temp(state.pool_setpoint_f), force=True)
         self.setDriver("CLISPC", self._encode_temp(self.cool_setpoint), force=True)
         self.setDriver("CLIMD", self.mode, force=True)
+        self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
+        self.setDriver("CLIFS", self.fan_mode, force=True)
 
     commands = {
         "QUERY": refresh,
         "CLISPH": cmd_set_heat_setpoint,
         "CLISPC": cmd_set_cool_setpoint,
         "CLIMD": cmd_set_mode,
+        "CLIFS": cmd_set_fan_mode,
     }
