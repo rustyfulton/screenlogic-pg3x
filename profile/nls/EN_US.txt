@@ -1,5 +1,9 @@
 ND-ThermostatLabF-NAME = Thermostat Lab
 ND-ThermostatLabF-ICON = Thermostat
+ND-HwhF-NAME = Honeywell Thermostat (F)
+ND-HwhF-ICON = Thermostat
+ND-HwhF-NAME = Honeywell Thermostat (F)
+ND-HwhF-ICON = Thermostat
 
 ST-140E-ST-NAME = Temperature
 ST-140E-CLISPH-NAME = Heat Setpoint
@@ -76,3 +80,73 @@ CT_ECO_LAB-0 = Home
 CT_ECO_LAB-1 = Away
 CT_ECO_LAB-2 = Sleep
 CT_ECO_LAB-3 = Smart1
+
+CMD-GV4-NAME = Schedule Mode
+ST-140H-ST-NAME = Temperature
+ST-140H-GV1-NAME = Priority Type
+ST-140H-GV2-NAME = Schedule Status
+ST-140H-GV3-NAME = Current Schedule Mode
+ST-140H-GV4-NAME = Hold Status
+ST-140H-GV5-NAME = Vacation Hold
+ST-140H-GV6-NAME = Connected
+ST-140H-GV7-NAME = Last Poll (Unix Time)
+
+IX_PRIORITY_TYPE-0 = Not Supported
+IX_PRIORITY_TYPE-1 = Pick A Room
+IX_PRIORITY_TYPE-2 = Follow Me
+IX_PRIORITY_TYPE-3 = Whole House
+
+IX_SCHEDULE_STATUS-0 = Pause
+IX_SCHEDULE_STATUS-1 = Resume
+
+IX_SCHEDULE_MODE-0 = Not Supported
+IX_SCHEDULE_MODE-1 = Wake
+IX_SCHEDULE_MODE-2 = Away
+IX_SCHEDULE_MODE-3 = Home
+IX_SCHEDULE_MODE-4 = Sleep
+IX_SCHEDULE_MODE-5 = Custom
+
+IX_HOLD_STATUS-0 = No Hold
+IX_HOLD_STATUS-1 = Temporary Hold
+IX_HOLD_STATUS-2 = Permanent Hold
+IX_HOLD_STATUS-3 = Hold Until
+IX_HOLD_STATUS-4 = Vaction Hold
+
+EN_PM-0 = Running
+EN_PM-1 = Hold Next
+EN_PM-2 = Hold Indefinite
+
+CMD-GV4-NAME = Schedule Mode
+ST-140H-ST-NAME = Temperature
+ST-140H-GV1-NAME = Priority Type
+ST-140H-GV2-NAME = Schedule Status
+ST-140H-GV3-NAME = Current Schedule Mode
+ST-140H-GV4-NAME = Hold Status
+ST-140H-GV5-NAME = Vacation Hold
+ST-140H-GV6-NAME = Connected
+ST-140H-GV7-NAME = Last Poll (Unix Time)
+
+IX_PRIORITY_TYPE-0 = Not Supported
+IX_PRIORITY_TYPE-1 = Pick A Room
+IX_PRIORITY_TYPE-2 = Follow Me
+IX_PRIORITY_TYPE-3 = Whole House
+
+IX_SCHEDULE_STATUS-0 = Pause
+IX_SCHEDULE_STATUS-1 = Resume
+
+IX_SCHEDULE_MODE-0 = Not Supported
+IX_SCHEDULE_MODE-1 = Wake
+IX_SCHEDULE_MODE-2 = Away
+IX_SCHEDULE_MODE-3 = Home
+IX_SCHEDULE_MODE-4 = Sleep
+IX_SCHEDULE_MODE-5 = Custom
+
+IX_HOLD_STATUS-0 = No Hold
+IX_HOLD_STATUS-1 = Temporary Hold
+IX_HOLD_STATUS-2 = Permanent Hold
+IX_HOLD_STATUS-3 = Hold Until
+IX_HOLD_STATUS-4 = Vaction Hold
+
+EN_PM-0 = Running
+EN_PM-1 = Hold Next
+EN_PM-2 = Hold Indefinite

@@ -101,4 +101,25 @@
   <editor id="I_PM_ALARM">
     <range uom="93" subset="1,2,3,21" />
   </editor>
+  <editor id="BOOL">
+    <range uom="2" subset="0,1" />
+  </editor>
+  <editor id="SECONDS">
+    <range uom="110" min="0" max="5000000000" step="1" prec="0" />
+  </editor>
+  <editor id="I_TSTAT_PROG_MODE">
+    <range uom="25" subset="0-2" nls="EN_PM" />
+  </editor>
+  <editor id="I_PRIORITY_TYPE">
+    <range id="PRIORITY_TYPE" uom="25" subset="0-3" nls="IX_PRIORITY_TYPE" />
+  </editor>
+  <editor id="I_SCHEDULE_STATUS">
+    <range id="SCHEDULE_STATUS" uom="25" subset="0-1" nls="IX_SCHEDULE_STATUS" />
+  </editor>
+  <editor id="I_SCHEDULE_MODE">
+    <range id="SCHEDULE_MODE" uom="25" subset="0-5" nls="IX_SCHEDULE_MODE" />
+  </editor>
+  <editor id="I_HOLD_STATUS">
+    <range id="HOLD_STATUS" uom="25" subset="0-4" nls="IX_HOLD_STATUS" />
+  </editor>
 </editors>
