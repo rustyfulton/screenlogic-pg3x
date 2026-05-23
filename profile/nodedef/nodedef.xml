@@ -259,13 +259,10 @@
         <cmd id="QUERY" />
         <cmd id="REFRESH" />
         <cmd id="CLISPH">
-          <p id="" editor="I_CLISPH_F" init="CLISPH" />
-        </cmd>
-        <cmd id="CLISPC">
-          <p id="" editor="I_CLISPC_F" init="CLISPC" />
+          <p id="" editor="I_SOLAR_CLISPH_F" init="CLISPH" />
         </cmd>
         <cmd id="CLIMD">
-          <p id="" editor="I_TSTAT_MODE" init="CLIMD" />
+          <p id="" editor="I_SOLAR_TSTAT_MODE" init="CLIMD" />
         </cmd>
         <cmd id="CLIFS">
           <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />
@@ -579,13 +576,10 @@
         <cmd id="QUERY" />
         <cmd id="REFRESH" />
         <cmd id="CLISPH">
-          <p id="" editor="I_CLISPH_F" init="CLISPH" />
-        </cmd>
-        <cmd id="CLISPC">
-          <p id="" editor="I_CLISPC_F" init="CLISPC" />
+          <p id="" editor="I_SOLAR_CLISPH_F" init="CLISPH" />
         </cmd>
         <cmd id="CLIMD">
-          <p id="" editor="I_TSTAT_MODE" init="CLIMD" />
+          <p id="" editor="I_SOLAR_TSTAT_MODE" init="CLIMD" />
         </cmd>
         <cmd id="CLIFS">
           <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />

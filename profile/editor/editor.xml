@@ -15,12 +15,7 @@
   </editor>
 
   <editor id="tempf">
-    <range uom="17">
-      <prec>0</prec>
-      <min>0</min>
-      <max>120</max>
-      <step>1</step>
-    </range>
+    <range uom="17" min="0" max="120" step="1" prec="0" />
   </editor>
 
   <editor id="onlevel">
