@@ -237,9 +237,20 @@ class ControllerNode(udi_interface.Node):
                 refresh_topology,
             )
             if self.lab_thermostat_node is not None:
-                self.lab_thermostat_node.refresh(
-                    {"reason": "thermostat_lab_refresh", "refresh_topology": refresh_topology}
-                )
+                query = getattr(self.lab_thermostat_node, "query", None)
+                payload = {
+                    "reason": "thermostat_lab_refresh",
+                    "refresh_topology": refresh_topology,
+                }
+                if callable(query):
+                    LOGGER.info(
+                        "Thermostat lab mode invoking node.query() for likely Alexa/Portal refresh path address=%s payload=%s",
+                        self.lab_thermostat_node.address,
+                        payload,
+                    )
+                    query(payload)
+                else:
+                    self.lab_thermostat_node.refresh(payload)
             return
 
         state = self.client.get_state()

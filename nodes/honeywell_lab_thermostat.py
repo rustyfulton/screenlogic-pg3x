@@ -57,9 +57,30 @@ class HoneywellLabThermostatNode(udi_interface.Node):
         self.mode = MODE_MAP["Cool"]
         self.fan_mode = FAN_MAP["Auto"]
         self.hold_status = 0
+        subscribe = getattr(polyglot, "subscribe", None)
+        start_evt = getattr(polyglot, "START", None)
+        if callable(subscribe) and start_evt is not None:
+            subscribe(start_evt, self.start, address)
+        LOGGER.info(
+            "Honeywell lab thermostat created address=%s primary=%s id=%s",
+            self.address,
+            self.primary,
+            self.id,
+        )
 
-    def refresh(self, command=None):
-        LOGGER.info("Refreshing Honeywell lab thermostat command=%s", command)
+    def start(self):
+        LOGGER.info(
+            "Honeywell lab thermostat START event address=%s -- publishing initial state",
+            self.address,
+        )
+        self.query({"reason": "start_event"})
+
+    def query(self, command=None):
+        LOGGER.info(
+            "Honeywell lab thermostat QUERY address=%s command=%s -- likely path when Alexa/Portal asks for fresh GUI state",
+            self.address,
+            command,
+        )
         state = self.client.get_state()
         temp = int(round(float(state.pool_temp_f)))
         humidity = 50
@@ -88,12 +109,50 @@ class HoneywellLabThermostatNode(udi_interface.Node):
             "GV7": int(time.time()),
         }
 
+        LOGGER.info(
+            "Honeywell lab thermostat snapshot address=%s temp=%s heat_sp=%s cool_sp=%s mode=%s fan_mode=%s running=%s humidity=%s hold=%s connected=%s",
+            self.address,
+            updates["ST"],
+            updates["CLISPH"],
+            updates["CLISPC"],
+            updates["CLIMD"],
+            updates["CLIFS"],
+            updates["CLIHCS"],
+            updates["CLIHUM"],
+            updates["GV4"],
+            updates["GV6"],
+        )
         for key, value in updates.items():
+            LOGGER.info(
+                "Honeywell lab thermostat publish address=%s driver=%s value=%s",
+                self.address,
+                key,
+                value,
+            )
             self.setDriver(key, value, force=True)
+        LOGGER.info(
+            "Honeywell lab thermostat reportDrivers address=%s -- flushing complete state bundle",
+            self.address,
+        )
+        self.reportDrivers()
+
+    def refresh(self, command=None):
+        LOGGER.info(
+            "Honeywell lab thermostat REFRESH address=%s command=%s",
+            self.address,
+            command,
+        )
+        self.query(command)
 
     def cmdSetPF(self, command):
         driver = command.get("cmd")
         raw = command.get("value")
+        LOGGER.info(
+            "Honeywell lab thermostat command address=%s driver=%s raw=%s",
+            self.address,
+            driver,
+            raw,
+        )
         try:
             value = int(raw)
         except (TypeError, ValueError):
@@ -107,28 +166,56 @@ class HoneywellLabThermostatNode(udi_interface.Node):
         elif driver == "CLIMD":
             self.mode = value
 
-        self.refresh(command)
+        LOGGER.info(
+            "Honeywell lab thermostat updated local state address=%s driver=%s value=%s",
+            self.address,
+            driver,
+            value,
+        )
+        self.query(command)
 
     def cmdSetHoldStatus(self, command):
         raw = command.get("value")
+        LOGGER.info(
+            "Honeywell lab thermostat hold command address=%s raw=%s",
+            self.address,
+            raw,
+        )
         try:
             self.hold_status = int(raw)
         except (TypeError, ValueError):
             LOGGER.warning("Ignoring invalid Honeywell lab hold payload %s", raw)
             return
         self.setDriver("GV4", self.hold_status, force=True)
+        LOGGER.info(
+            "Honeywell lab thermostat hold state updated address=%s hold=%s",
+            self.address,
+            self.hold_status,
+        )
+        self.reportDrivers()
 
     def cmdSetFS(self, command):
         raw = command.get("value")
+        LOGGER.info(
+            "Honeywell lab thermostat fan command address=%s raw=%s",
+            self.address,
+            raw,
+        )
         try:
             self.fan_mode = int(raw)
         except (TypeError, ValueError):
             LOGGER.warning("Ignoring invalid Honeywell lab fan payload %s", raw)
             return
         self.setDriver("CLIFS", self.fan_mode, force=True)
+        LOGGER.info(
+            "Honeywell lab thermostat fan state updated address=%s fan_mode=%s",
+            self.address,
+            self.fan_mode,
+        )
+        self.reportDrivers()
 
     commands = {
-        "QUERY": refresh,
+        "QUERY": query,
         "CLISPH": cmdSetPF,
         "CLISPC": cmdSetPF,
         "CLIMD": cmdSetPF,
