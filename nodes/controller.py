@@ -109,6 +109,8 @@ class ControllerNode(udi_interface.Node):
                 self.poly.addNode(self.lab_thermostat_node)
             return
 
+        self._cleanup_stale_lab_thermostat_child()
+
         if self.include_pool_node and self.pool_node is None:
             self.pool_node = PoolNode(
                 self.poly,
@@ -424,6 +426,29 @@ class ControllerNode(udi_interface.Node):
         elif self.dummy_thermostat_node is not None:
             self._remove_node_if_present("dummytstat")
             self.dummy_thermostat_node = None
+
+    def _cleanup_stale_lab_thermostat_child(self):
+        if self.lab_thermostat_node is not None:
+            LOGGER.info(
+                "Leaving thermostat lab mode: clearing cached lab thermostat child"
+            )
+            self.lab_thermostat_node = None
+
+        get_node = getattr(self.poly, "getNode", None)
+        if not callable(get_node):
+            return
+
+        existing = get_node("thermostat_1")
+        if existing is None:
+            return
+
+        existing_name = getattr(existing, "name", "")
+        if existing_name == "Thermostat Lab":
+            LOGGER.info(
+                "Removing stale lab thermostat child so normal Pool Thermostat can be created"
+            )
+            self._remove_node_if_present("thermostat_1")
+            self.pool_thermostat_node = None
 
     def _refresh_pool_temp_experiments(self, state, *, discover=False):
         if not self.enable_pool_temp_experiments:
