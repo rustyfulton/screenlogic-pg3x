@@ -4,7 +4,7 @@ LOGGER = udi_interface.LOGGER
 
 
 class EcobeeLabThermostatNode(udi_interface.Node):
-    id = "EcobeeF"
+    id = "ThermostatLabF"
     hint = "0x010c0100"
     drivers = [
         {"driver": "ST", "value": 70, "uom": 17},

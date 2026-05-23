@@ -76,7 +76,7 @@
     </cmds>
   </nodeDef>
 
-  <nodeDef id="EcobeeF" nodeType="140" nls="140E">
+  <nodeDef id="ThermostatLabF" nodeType="140" nls="140E">
     <sts>
       <st id="ST" editor="I_TEMP_F" />
       <st id="CLISPH" editor="I_CLISPH_F" />
