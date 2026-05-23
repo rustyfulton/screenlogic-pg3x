@@ -102,7 +102,7 @@ class ControllerNode(udi_interface.Node):
                 )
                 self.lab_thermostat_node = EcobeeLabThermostatNode(
                     self.poly,
-                    self.address,
+                    "thermostat_1",
                     "thermostat_1",
                     "Thermostat Lab",
                     self.client,
