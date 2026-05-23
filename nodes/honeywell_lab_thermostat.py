@@ -47,6 +47,7 @@ RUNNING_STATE_MAP = {
 
 class HoneywellLabThermostatNode(udi_interface.Node):
     id = "ThermostatLabHwhF"
+    hint = "0x010c0100"
     drivers = DRIVERS_MAP["ThermostatLabHwhF"]
 
     def __init__(self, polyglot, primary, address, name, client):
