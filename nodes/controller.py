@@ -19,6 +19,7 @@ from nodes.experimental_pool_temp import (
 )
 from nodes.feature import FeatureNode
 from nodes.pool import PoolNode
+from nodes.pool_thermostat import PoolThermostatNode
 from nodes.dummy_thermostat import DummyThermostatNode
 from nodes.solar_heater import SolarHeaterNode
 from nodes.solar_thermostat import SolarThermostatNode
@@ -74,6 +75,7 @@ class ControllerNode(udi_interface.Node):
         self.pool_node = None
         self.solar_node = None
         self.solar_thermostat_node = None
+        self.pool_thermostat_node = None
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
         self.experimental_pool_temp_nodes = {}
@@ -116,6 +118,15 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.pool_node)
+        if self.pool_thermostat_node is None:
+            self.pool_thermostat_node = PoolThermostatNode(
+                self.poly,
+                self.address,
+                "thermostat_1",
+                "Pool Thermostat",
+                self.client,
+            )
+            self.poly.addNode(self.pool_thermostat_node)
         if self.include_solar_node and self.solar_node is None:
             self.solar_node = SolarHeaterNode(
                 self.poly,
@@ -191,6 +202,8 @@ class ControllerNode(udi_interface.Node):
             self.solar_node.client = client
         if self.solar_thermostat_node is not None:
             self.solar_thermostat_node.client = client
+        if self.pool_thermostat_node is not None:
+            self.pool_thermostat_node.client = client
         for node in self.feature_nodes.values():
             node.client = client
         for node in self.experimental_pool_temp_nodes.values():
@@ -229,6 +242,8 @@ class ControllerNode(udi_interface.Node):
         state = self.client.get_state()
         if self.pool_node is not None:
             self.pool_node.update_from_state(state)
+        if self.pool_thermostat_node is not None:
+            self.pool_thermostat_node.update_from_state(state)
         self._refresh_pool_temp_experiments(state, discover=refresh_topology)
         if self.solar_node is not None:
             self.solar_node.update_from_state(state)
@@ -387,11 +402,12 @@ class ControllerNode(udi_interface.Node):
             self._remove_node_if_present(address)
         self.feature_nodes.clear()
 
-        for address in ("pool", "solar", "solartstat"):
+        for address in ("pool", "solar", "solartstat", "thermostat_1"):
             self._remove_node_if_present(address)
         self.pool_node = None
         self.solar_node = None
         self.solar_thermostat_node = None
+        self.pool_thermostat_node = None
 
         self._remove_node_if_present("labtstat")
         self._remove_node_if_present("labtstata")
