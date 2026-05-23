@@ -1,5 +1,5 @@
-ND-ThermostatLabF-NAME = Thermostat Lab
-ND-ThermostatLabF-ICON = Thermostat
+ND-EcobeeF-NAME = Ecobee Thermostat (F)
+ND-EcobeeF-ICON = Thermostat
 
 ST-140E-ST-NAME = Temperature
 ST-140E-CLISPH-NAME = Heat Setpoint

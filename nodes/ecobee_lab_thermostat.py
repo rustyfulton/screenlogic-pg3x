@@ -4,31 +4,35 @@ LOGGER = udi_interface.LOGGER
 
 
 class EcobeeLabThermostatNode(udi_interface.Node):
-    id = "ThermostatLabF"
-    hint = "0x05010100"
+    id = "EcobeeF"
+    hint = "0x010c0100"
     drivers = [
-        {"driver": "ST", "value": 74, "uom": 17},
+        {"driver": "ST", "value": 70, "uom": 17},
         {"driver": "CLISPH", "value": 65, "uom": 17},
-        {"driver": "CLISPC", "value": 74, "uom": 17},
+        {"driver": "CLISPC", "value": 75, "uom": 17},
         {"driver": "CLIMD", "value": 2, "uom": 67},
         {"driver": "CLIFS", "value": 0, "uom": 68},
         {"driver": "CLIHUM", "value": 50, "uom": 22},
-        {"driver": "CLIHCS", "value": 2, "uom": 66},
+        {"driver": "CLIHCS", "value": 0, "uom": 25},
         {"driver": "CLIFRS", "value": 1, "uom": 80},
+        {"driver": "CLISMD", "value": 1, "uom": 25},
+        {"driver": "GV3", "value": 0, "uom": 25},
     ]
 
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
         self.client = client
         self.climd = 2
+        self.clismd = 1
+        self.gv3 = 0
 
     def refresh(self, command=None):
         LOGGER.info("Refreshing Ecobee lab thermostat command=%s", command)
         state = self.client.get_state()
-        temp = int(round(float(state.pool_temp_f)))
-        heat_sp = int(round(float(state.pool_setpoint_f)))
-        cool_sp = max(heat_sp, 74)
-        hcs = 2 if state.heater_on else 0
+        temp = 70
+        heat_sp = 65
+        cool_sp = 75
+        hcs = 0
         fan_state = 1 if state.pump_on else 0
         self.setDriver("ST", temp, force=True)
         self.setDriver("CLISPH", heat_sp, force=True)
@@ -38,6 +42,8 @@ class EcobeeLabThermostatNode(udi_interface.Node):
         self.setDriver("CLIHUM", 50, force=True)
         self.setDriver("CLIHCS", hcs, force=True)
         self.setDriver("CLIFRS", fan_state, force=True)
+        self.setDriver("CLISMD", self.clismd, force=True)
+        self.setDriver("GV3", self.gv3, force=True)
 
     def _set_int(self, attr_name, driver, command):
         raw = command.get("value")
@@ -56,6 +62,12 @@ class EcobeeLabThermostatNode(udi_interface.Node):
 
     def cmd_set_mode(self, command):
         self._set_int("climd", "CLIMD", command)
+
+    def cmd_set_schedule_mode(self, command):
+        self._set_int("clismd", "CLISMD", command)
+
+    def cmd_set_gv3(self, command):
+        self._set_int("gv3", "GV3", command)
 
     def cmd_brt(self, command):
         self._adjust_active_setpoint(command, 1)
@@ -85,6 +97,8 @@ class EcobeeLabThermostatNode(udi_interface.Node):
         "CLISPC": cmd_set_pf,
         "CLIFS": cmd_set_pf,
         "CLIMD": cmd_set_mode,
+        "CLISMD": cmd_set_schedule_mode,
+        "GV3": cmd_set_gv3,
         "BRT": cmd_brt,
         "DIM": cmd_dim,
     }
