@@ -17,7 +17,7 @@ class ThermostatLabChildNode(ExperimentalPoolTempDocCloneHintThermostatNode):
     hint = "0x010C0100"
 
     def _encode_temp(self, value):
-        return int(round(float(value) * 10))
+        return round(float(value), 1)
 
     def update_from_state(self, state):
         self.setDriver("ST", self._encode_temp(state.pool_temp_f), force=True)

@@ -7,10 +7,10 @@ class PoolThermostatNode(udi_interface.Node):
     id = "ThermostatF"
     hint = "0x010C0100"
     drivers = [
-        {"driver": "ST", "value": 820, "uom": 17},
+        {"driver": "ST", "value": 82.0, "uom": 17},
         {"driver": "CLIMD", "value": 1, "uom": 67},
-        {"driver": "CLISPC", "value": 880, "uom": 17},
-        {"driver": "CLISPH", "value": 840, "uom": 17},
+        {"driver": "CLISPC", "value": 88.0, "uom": 17},
+        {"driver": "CLISPH", "value": 84.0, "uom": 17},
     ]
 
     def __init__(self, polyglot, primary, address, name, client):
@@ -20,7 +20,7 @@ class PoolThermostatNode(udi_interface.Node):
         self.mode = 1
 
     def _encode_temp(self, value):
-        return int(round(float(value) * 10))
+        return round(float(value), 1)
 
     def refresh(self, command=None):
         LOGGER.info("Refreshing ScreenLogic pool thermostat state command=%s", command)
