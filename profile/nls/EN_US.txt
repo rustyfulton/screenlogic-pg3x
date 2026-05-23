@@ -1,9 +1,9 @@
 ND-ThermostatLabF-NAME = Thermostat Lab
 ND-ThermostatLabF-ICON = Thermostat
-ND-HwhF-NAME = Honeywell Thermostat (F)
-ND-HwhF-ICON = Thermostat
-ND-HwhF-NAME = Honeywell Thermostat (F)
-ND-HwhF-ICON = Thermostat
+ND-ThermostatLabHwhF-NAME = Honeywell Thermostat (F)
+ND-ThermostatLabHwhF-ICON = Thermostat
+ND-ThermostatLabHwhF-NAME = Honeywell Thermostat (F)
+ND-ThermostatLabHwhF-ICON = Thermostat
 
 ST-140E-ST-NAME = Temperature
 ST-140E-CLISPH-NAME = Heat Setpoint

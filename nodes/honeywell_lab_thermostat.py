@@ -6,7 +6,7 @@ LOGGER = udi_interface.LOGGER
 
 
 DRIVERS_MAP = {
-    "HwhF": [
+    "ThermostatLabHwhF": [
         {"driver": "ST", "value": 70, "uom": 17},
         {"driver": "CLISPH", "value": 65, "uom": 17},
         {"driver": "CLISPC", "value": 75, "uom": 17},
@@ -46,8 +46,8 @@ RUNNING_STATE_MAP = {
 
 
 class HoneywellLabThermostatNode(udi_interface.Node):
-    id = "HwhF"
-    drivers = DRIVERS_MAP["HwhF"]
+    id = "ThermostatLabHwhF"
+    drivers = DRIVERS_MAP["ThermostatLabHwhF"]
 
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
