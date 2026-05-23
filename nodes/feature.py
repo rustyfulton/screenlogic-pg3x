@@ -5,14 +5,29 @@ LOGGER = udi_interface.LOGGER
 
 class FeatureNode(udi_interface.Node):
     id = "feature"
+    GENERIC_SWITCH_HINT = "0x01040200"
+    NON_DIMMING_LIGHT_HINT = "0x01021000"
     drivers = [
         {"driver": "ST", "value": 0, "uom": 2},
     ]
 
-    def __init__(self, polyglot, primary, address, name, client, circuit_id):
+    def __init__(
+        self,
+        polyglot,
+        primary,
+        address,
+        name,
+        client,
+        circuit_id,
+        is_light=False,
+    ):
         super().__init__(polyglot, primary, address, name)
         self.client = client
         self.circuit_id = int(circuit_id)
+        self.is_light = bool(is_light)
+        self.hint = (
+            self.NON_DIMMING_LIGHT_HINT if self.is_light else self.GENERIC_SWITCH_HINT
+        )
 
     def refresh(self, command=None):
         LOGGER.info("Refreshing ScreenLogic feature circuit id=%s", self.circuit_id)
@@ -40,9 +55,6 @@ class FeatureNode(udi_interface.Node):
 
     commands = {
         "QUERY": refresh,
-        "REFRESH": refresh,
         "DON": cmd_feature_on,
         "DOF": cmd_feature_off,
-        "FEATURE_ON": cmd_feature_on,
-        "FEATURE_OFF": cmd_feature_off,
     }
