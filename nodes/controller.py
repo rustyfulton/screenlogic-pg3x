@@ -21,6 +21,7 @@ from nodes.feature import FeatureNode
 from nodes.pool import PoolNode
 from nodes.pool_thermostat import PoolThermostatNode
 from nodes.dummy_thermostat import DummyThermostatNode
+from nodes.ecobee_lab_thermostat import EcobeeLabThermostatNode
 from nodes.solar_heater import SolarHeaterNode
 from nodes.solar_thermostat import SolarThermostatNode
 from nodes.thermostat_lab_controller import ThermostatLabChildNode
@@ -97,9 +98,9 @@ class ControllerNode(udi_interface.Node):
             self._cleanup_for_thermostat_lab_mode()
             if self.lab_thermostat_node is None:
                 LOGGER.info(
-                    "Thermostat lab mode: adding ThermostatF child thermostat only"
+                    "Thermostat lab mode: adding Ecobee thermostat child only"
                 )
-                self.lab_thermostat_node = ThermostatLabChildNode(
+                self.lab_thermostat_node = EcobeeLabThermostatNode(
                     self.poly,
                     self.address,
                     "thermostat_1",
