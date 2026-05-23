@@ -16,6 +16,24 @@ class ThermostatLabChildNode(ExperimentalPoolTempDocCloneHintThermostatNode):
     id = "ThermostatF"
     hint = "0x010C0100"
 
+    def _encode_temp(self, value):
+        return int(round(float(value) * 10))
+
+    def update_from_state(self, state):
+        self.setDriver("ST", self._encode_temp(state.pool_temp_f), force=True)
+        self.setDriver("CLISPH", self._encode_temp(state.pool_setpoint_f), force=True)
+        self.setDriver("CLISPC", self._encode_temp(self.cool_setpoint), force=True)
+        self.setDriver("CLIMD", self.mode, force=True)
+        self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
+        self._log_snapshot(
+            "publish",
+            temp=state.pool_temp_f,
+            heat_sp=state.pool_setpoint_f,
+            cool_sp=self.cool_setpoint,
+            mode=self.mode,
+            hcs=1 if state.heater_on else 0,
+        )
+
 
 class ThermostatLabControllerNode(NativeThermostatLabRootNode):
     def __init__(self, polyglot, primary, address, name, client):
