@@ -22,6 +22,7 @@ from nodes.pool import PoolNode
 from nodes.dummy_thermostat import DummyThermostatNode
 from nodes.solar_heater import SolarHeaterNode
 from nodes.solar_thermostat import SolarThermostatNode
+from nodes.thermostat_lab_controller import ThermostatLabChildNode
 
 LOGGER = udi_interface.LOGGER
 EXPERIMENTAL_FEATURE_ADDRESSES = (
@@ -94,28 +95,16 @@ class ControllerNode(udi_interface.Node):
             self._cleanup_for_thermostat_lab_mode()
             if self.lab_thermostat_node is None:
                 LOGGER.info(
-                    "Thermostat lab mode: adding self-primary hinted doc-clone thermostat family"
+                    "Thermostat lab mode: adding ThermostatF child thermostat only"
                 )
-                self.lab_thermostat_node = ExperimentalPoolTempDocCloneHintThermostatNode(
+                self.lab_thermostat_node = ThermostatLabChildNode(
                     self.poly,
-                    "labtstat",
-                    "labtstat",
+                    self.address,
+                    "thermostat_1",
                     "Thermostat Lab",
                     self.client,
                 )
                 self.poly.addNode(self.lab_thermostat_node)
-            if self.lab_thermostat_alarm_node is None:
-                LOGGER.info(
-                    "Thermostat lab mode: adding thermostat lab power alarm child"
-                )
-                self.lab_thermostat_alarm_node = ExperimentalPoolTempPowerAlarmNode(
-                    self.poly,
-                    "labtstat",
-                    "labtstata",
-                    "Thermostat Lab Power Alarm",
-                    self.client,
-                )
-                self.poly.addNode(self.lab_thermostat_alarm_node)
             return
 
         if self.include_pool_node and self.pool_node is None:
@@ -212,8 +201,6 @@ class ControllerNode(udi_interface.Node):
             node.client = client
         if self.lab_thermostat_node is not None:
             self.lab_thermostat_node.client = client
-        if self.lab_thermostat_alarm_node is not None:
-            self.lab_thermostat_alarm_node.client = client
         self.ensure_children()
 
     def shortPoll(self):
@@ -235,10 +222,6 @@ class ControllerNode(udi_interface.Node):
             )
             if self.lab_thermostat_node is not None:
                 self.lab_thermostat_node.refresh(
-                    {"reason": "thermostat_lab_refresh", "refresh_topology": refresh_topology}
-                )
-            if self.lab_thermostat_alarm_node is not None:
-                self.lab_thermostat_alarm_node.refresh(
                     {"reason": "thermostat_lab_refresh", "refresh_topology": refresh_topology}
                 )
             return
@@ -412,6 +395,8 @@ class ControllerNode(udi_interface.Node):
 
         self._remove_node_if_present("labtstat")
         self._remove_node_if_present("labtstata")
+        self._remove_node_if_present("thermostat_1")
+        self._remove_node_if_present("controllera")
         self.lab_thermostat_node = None
         self.lab_thermostat_alarm_node = None
 

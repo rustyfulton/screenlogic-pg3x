@@ -12,7 +12,6 @@ from lib.diagnostic_runner import DiagnosticSettings, ScreenLogicDiagnosticRunne
 from lib.fake_screenlogic_client import FakeScreenLogicClient
 from lib.screenlogicpy_client import ScreenLogicPyClient
 from nodes.controller import ControllerNode
-from nodes.thermostat_lab_controller import ThermostatLabControllerNode
 
 LOGGER = udi_interface.LOGGER
 PARAM_CACHE_PATH = Path("custom_params_cache.json")
@@ -40,18 +39,6 @@ class ScreenLogicNodeServer:
         self.diagnostic_thread = None
 
     def _make_controller(self):
-        if self.config.isolated_thermostat_lab_mode:
-            LOGGER.info(
-                "Creating thermostat lab controller as the root node at address=controller"
-            )
-            return ThermostatLabControllerNode(
-                self.polyglot,
-                "controller",
-                "controller",
-                "Thermostat Lab",
-                self.client,
-            )
-
         return ControllerNode(
             self.polyglot,
             "controller",
@@ -92,8 +79,6 @@ class ScreenLogicNodeServer:
     def _controller_matches_runtime_mode(self):
         if self.controller is None:
             return False
-        if self.config.isolated_thermostat_lab_mode:
-            return isinstance(self.controller, ThermostatLabControllerNode)
         return isinstance(self.controller, ControllerNode)
 
     def _recreate_controller_for_runtime_mode(self):
@@ -104,6 +89,7 @@ class ScreenLogicNodeServer:
         for address in (
             "controllera",
             "controller",
+            "thermostat_1",
             "labtstata",
             "labtstat",
             "pool",

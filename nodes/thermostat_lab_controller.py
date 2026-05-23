@@ -12,6 +12,11 @@ class NativeThermostatLabRootNode(ExperimentalPoolTempDocCloneHintThermostatNode
     hint = "0x010C0100"
 
 
+class ThermostatLabChildNode(ExperimentalPoolTempDocCloneHintThermostatNode):
+    id = "ThermostatF"
+    hint = "1.12.1.0"
+
+
 class ThermostatLabControllerNode(NativeThermostatLabRootNode):
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, address, address, name, client)
