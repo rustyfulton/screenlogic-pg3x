@@ -37,3 +37,38 @@ The live backend follows the same broad model as the Home Assistant integration:
 connect to the local ScreenLogic adapter, discover configured bodies and
 circuits, map heater/solar modes from ScreenLogic data, and expose switchable
 circuits as feature nodes.
+
+## Alexa / ISY Portal Thermostat Enrollment
+
+There is currently one annoying but important manual step if you want ISY Portal
+to offer the pool solar thermostat as a thermostat for Amazon Echo / Alexa.
+
+1. Install the plugin and configure it normally.
+2. Confirm the thermostat is visible and working in native IoX / Admin Console
+   usage first.
+3. In ISY Portal, open:
+   `Select Tool -> Connectivity -> Device Hint Editor`
+4. Find the solar thermostat device. In practice this is the device ending with
+   `n*_solartstat` (shown as the Solar Thermostat node).
+5. Change its hint from:
+   `0.0.0.0`
+   to:
+   `1.12.1.0`
+6. Go back to:
+   `Select Tool -> Connectivity -> Amazon Echo`
+7. Add the device there. After the hint change, Portal should offer it as a
+   thermostat instead of a switch.
+
+If Portal or Alexa gets into a bad state, delete the device from Portal/Alexa,
+reinstall the node server into a fresh slot number, and try again.
+
+## Admin Console NLS Placeholders
+
+If you see button or subtitle text like:
+
+- `[NLS-10:ND-feature-NAME]`
+- `[NLS-10:CMD-REFRESH-NAME]`
+
+that means IoX is showing unresolved profile labels from the node server NLS
+files. In practice, this usually means the updated profile has not been fully
+reloaded yet. Reinstall/update the node server profile and let IoX reload it.

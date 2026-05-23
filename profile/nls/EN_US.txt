@@ -4,6 +4,17 @@ ND-ThermostatLabHwhF-NAME = Honeywell Thermostat (F)
 ND-ThermostatLabHwhF-ICON = Thermostat
 ND-ThermostatLabHwhF-NAME = Honeywell Thermostat (F)
 ND-ThermostatLabHwhF-ICON = Thermostat
+ND-feature-NAME = Feature
+ND-feature-ICON = Switch
+
+ST-feature-ST-NAME = Status
+
+CMD-QUERY-NAME = Query
+CMD-REFRESH-NAME = Refresh
+CMD-DON-NAME = On
+CMD-DOF-NAME = Off
+CMD-FEATURE_ON-NAME = On
+CMD-FEATURE_OFF-NAME = Off
 
 ST-140E-ST-NAME = Temperature
 ST-140E-CLISPH-NAME = Heat Setpoint
