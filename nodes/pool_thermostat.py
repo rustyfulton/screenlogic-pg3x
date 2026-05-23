@@ -22,17 +22,12 @@ class PoolThermostatNode(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
         self.client = client
-        self.cool_setpoint = 74
-        self.mode = 2
+        self.cool_setpoint = 88
+        self.mode = 1
         self.fan_mode = 0
         self.fan_override = 0
-        self.humidity = 500
-        self.battery_level = 95
-        self.current_temp = 740
-        self.heat_setpoint = 650
-        self.cool_setpoint_raw = 740
-        self.hvac_state = 2
-        self.fan_state = 1
+        self.humidity = 50
+        self.battery_level = 100
 
     def refresh(self, command=None):
         LOGGER.info("Refreshing ScreenLogic pool thermostat state command=%s", command)
@@ -77,13 +72,13 @@ class PoolThermostatNode(udi_interface.Node):
         self.update_from_state(self.client.get_state())
 
     def update_from_state(self, state):
-        self.setDriver("ST", self.current_temp, force=True)
-        self.setDriver("CLISPH", self.heat_setpoint, force=True)
-        self.setDriver("CLISPC", self.cool_setpoint_raw, force=True)
+        self.setDriver("ST", state.pool_temp_f, force=True)
+        self.setDriver("CLISPH", state.pool_setpoint_f, force=True)
+        self.setDriver("CLISPC", self.cool_setpoint, force=True)
         self.setDriver("CLIMD", self.mode, force=True)
-        self.setDriver("CLIHCS", self.hvac_state, force=True)
+        self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
         self.setDriver("CLIFS", self.fan_mode, force=True)
-        self.setDriver("CLIFRS", self.fan_state, force=True)
+        self.setDriver("CLIFRS", 1 if state.pump_on else 0, force=True)
         self.setDriver("CLIFSO", self.fan_override, force=True)
         self.setDriver("CLIHUM", self.humidity, force=True)
         self.setDriver("BATLVL", self.battery_level, force=True)
