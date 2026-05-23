@@ -48,6 +48,10 @@
       <st id="CLISPH" editor="I_CLISPH_F" />
       <st id="CLIHCS" editor="I_TSTAT_HCS" />
       <st id="CLIFS" editor="I_TSTAT_FAN_MODE" />
+      <st id="CLIFRS" editor="I_TSTAT_FAN_STATE" />
+      <st id="CLIFSO" editor="I_TSTAT_FAN_OVERRIDE" />
+      <st id="CLIHUM" editor="I_TSTAT_HUM" />
+      <st id="BATLVL" editor="I_BAT_PCT" />
     </sts>
     <cmds>
       <sends />
@@ -63,6 +67,9 @@
         </cmd>
         <cmd id="CLIFS">
           <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />
+        </cmd>
+        <cmd id="CLIFSO">
+          <p id="" editor="I_TSTAT_FAN_OVERRIDE" init="CLIFSO" />
         </cmd>
         <cmd id="QUERY" />
       </accepts>

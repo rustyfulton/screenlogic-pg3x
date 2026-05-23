@@ -13,6 +13,10 @@ class PoolThermostatNode(udi_interface.Node):
         {"driver": "CLISPH", "value": 84.0, "uom": 17},
         {"driver": "CLIHCS", "value": 0, "uom": 66},
         {"driver": "CLIFS", "value": 0, "uom": 68},
+        {"driver": "CLIFRS", "value": 0, "uom": 80},
+        {"driver": "CLIFSO", "value": 0, "uom": 81},
+        {"driver": "CLIHUM", "value": 50.0, "uom": 22},
+        {"driver": "BATLVL", "value": 100, "uom": 51},
     ]
 
     def __init__(self, polyglot, primary, address, name, client):
@@ -21,6 +25,9 @@ class PoolThermostatNode(udi_interface.Node):
         self.cool_setpoint = 88
         self.mode = 1
         self.fan_mode = 0
+        self.fan_override = 0
+        self.humidity = 50.0
+        self.battery_level = 100
 
     def _encode_temp(self, value):
         return round(float(value), 1)
@@ -58,6 +65,15 @@ class PoolThermostatNode(udi_interface.Node):
             LOGGER.warning("Ignoring invalid pool thermostat fan payload=%s", raw)
         self.update_from_state(self.client.get_state())
 
+    def cmd_set_fan_override(self, command):
+        raw = command.get("value")
+        LOGGER.info("ScreenLogic pool thermostat command: set fan override to %s", raw)
+        try:
+            self.fan_override = int(raw)
+        except (TypeError, ValueError):
+            LOGGER.warning("Ignoring invalid pool thermostat fan override payload=%s", raw)
+        self.update_from_state(self.client.get_state())
+
     def update_from_state(self, state):
         self.setDriver("ST", self._encode_temp(state.pool_temp_f), force=True)
         self.setDriver("CLISPH", self._encode_temp(state.pool_setpoint_f), force=True)
@@ -65,6 +81,10 @@ class PoolThermostatNode(udi_interface.Node):
         self.setDriver("CLIMD", self.mode, force=True)
         self.setDriver("CLIHCS", 1 if state.heater_on else 0, force=True)
         self.setDriver("CLIFS", self.fan_mode, force=True)
+        self.setDriver("CLIFRS", 1 if state.pump_on else 0, force=True)
+        self.setDriver("CLIFSO", self.fan_override, force=True)
+        self.setDriver("CLIHUM", self.humidity, force=True)
+        self.setDriver("BATLVL", self.battery_level, force=True)
 
     commands = {
         "QUERY": refresh,
@@ -72,4 +92,5 @@ class PoolThermostatNode(udi_interface.Node):
         "CLISPC": cmd_set_cool_setpoint,
         "CLIMD": cmd_set_mode,
         "CLIFS": cmd_set_fan_mode,
+        "CLIFSO": cmd_set_fan_override,
     }
