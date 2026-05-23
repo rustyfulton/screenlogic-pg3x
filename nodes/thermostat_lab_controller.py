@@ -9,7 +9,7 @@ LOGGER = udi_interface.LOGGER
 
 class NativeThermostatLabRootNode(ExperimentalPoolTempDocCloneHintThermostatNode):
     id = "ThermostatF"
-    hint = "1.12.1.0"
+    hint = "0x010C0100"
 
 
 class ThermostatLabControllerNode(NativeThermostatLabRootNode):
