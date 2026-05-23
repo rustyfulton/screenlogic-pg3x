@@ -87,6 +87,7 @@ class HoneywellLabThermostatNode(udi_interface.Node):
             "GV6": 1,  # Connected: True
             "GV7": int(time.time()),
         }
+
         for key, value in updates.items():
             self.setDriver(key, value, force=True)
 
