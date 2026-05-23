@@ -82,14 +82,14 @@ CT_ECO_LAB-2 = Sleep
 CT_ECO_LAB-3 = Smart1
 
 CMD-GV4-NAME = Schedule Mode
-ST-140H-ST-NAME = Temperature
-ST-140H-GV1-NAME = Priority Type
-ST-140H-GV2-NAME = Schedule Status
-ST-140H-GV3-NAME = Current Schedule Mode
-ST-140H-GV4-NAME = Hold Status
-ST-140H-GV5-NAME = Vacation Hold
-ST-140H-GV6-NAME = Connected
-ST-140H-GV7-NAME = Last Poll (Unix Time)
+ST-145H-ST-NAME = Temperature
+ST-145H-GV1-NAME = Priority Type
+ST-145H-GV2-NAME = Schedule Status
+ST-145H-GV3-NAME = Current Schedule Mode
+ST-145H-GV4-NAME = Hold Status
+ST-145H-GV5-NAME = Vacation Hold
+ST-145H-GV6-NAME = Connected
+ST-145H-GV7-NAME = Last Poll (Unix Time)
 
 IX_PRIORITY_TYPE-0 = Not Supported
 IX_PRIORITY_TYPE-1 = Pick A Room
@@ -117,14 +117,14 @@ EN_PM-1 = Hold Next
 EN_PM-2 = Hold Indefinite
 
 CMD-GV4-NAME = Schedule Mode
-ST-140H-ST-NAME = Temperature
-ST-140H-GV1-NAME = Priority Type
-ST-140H-GV2-NAME = Schedule Status
-ST-140H-GV3-NAME = Current Schedule Mode
-ST-140H-GV4-NAME = Hold Status
-ST-140H-GV5-NAME = Vacation Hold
-ST-140H-GV6-NAME = Connected
-ST-140H-GV7-NAME = Last Poll (Unix Time)
+ST-145H-ST-NAME = Temperature
+ST-145H-GV1-NAME = Priority Type
+ST-145H-GV2-NAME = Schedule Status
+ST-145H-GV3-NAME = Current Schedule Mode
+ST-145H-GV4-NAME = Hold Status
+ST-145H-GV5-NAME = Vacation Hold
+ST-145H-GV6-NAME = Connected
+ST-145H-GV7-NAME = Last Poll (Unix Time)
 
 IX_PRIORITY_TYPE-0 = Not Supported
 IX_PRIORITY_TYPE-1 = Pick A Room

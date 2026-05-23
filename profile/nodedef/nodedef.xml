@@ -158,7 +158,7 @@
     </cmds>
   </nodeDef>
 
-  <nodeDef id="ThermostatLabHwhF" nodeType="140" nls="140H">
+  <nodeDef id="ThermostatLabHwhF" nodeType="145" nls="145H">
     <sts>
       <st id="ST" editor="I_TEMP_F" />
       <st id="CLISPH" editor="I_CLISPH_F" />
