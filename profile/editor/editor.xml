@@ -47,11 +47,17 @@
   <editor id="I_CLISPH_F">
     <range uom="17" min="32" max="90" step="1" prec="0" />
   </editor>
+  <editor id="I_SOLAR_CLISPH_F">
+    <range uom="17" min="45" max="95" step="1" prec="0" />
+  </editor>
   <editor id="I_CLISPH_DEG">
     <range uom="17" min="32" max="90" step="1" prec="0" />
   </editor>
   <editor id="I_TSTAT_MODE">
     <range uom="67" subset="0-3" />
+  </editor>
+  <editor id="I_SOLAR_TSTAT_MODE">
+    <range uom="67" subset="0,1" />
   </editor>
   <editor id="I_TSTAT_FAN_MODE">
     <range uom="68" subset="0,1,6" />
