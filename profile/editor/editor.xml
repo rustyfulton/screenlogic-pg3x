@@ -86,6 +86,12 @@
   <editor id="I_ECO">
     <range uom="25" subset="0-1" nls="ECO" />
   </editor>
+  <editor id="I_BACKLIGHT">
+    <range uom="56" subset="0-10" />
+  </editor>
+  <editor id="CT_ECO_LAB">
+    <range uom="25" subset="0-3" nls="CT_ECO_LAB" />
+  </editor>
   <editor id="I_TSTAT_FAN_OVERRIDE">
     <range uom="81" />
   </editor>

@@ -89,11 +89,14 @@
       <st id="GV1" editor="I_TSTAT_HUM_SET" />
       <st id="CLISMD" editor="I_TSTAT_PROG_MODE2" />
       <st id="GV4" editor="I_TSTAT_FANONTIME" />
+      <st id="GV3" editor="CT_ECO_LAB" />
       <st id="GV5" editor="I_TSTAT_HUM_SET" />
       <st id="GV6" editor="I_ENABLED" />
       <st id="GV7" editor="I_ENABLED" />
       <st id="GV8" editor="bool" />
       <st id="GV9" editor="I_ENABLED" />
+      <st id="GV10" editor="I_BACKLIGHT" />
+      <st id="GV11" editor="I_BACKLIGHT" />
       <st id="GV17" editor="I_ECO" />
     </sts>
     <cmds>
@@ -117,6 +120,10 @@
         <cmd id="GV1">
           <p id="" editor="I_TSTAT_HUM_SET" init="GV1" />
         </cmd>
+        <cmd id="GV3">
+          <p id="" editor="CT_ECO_LAB" init="GV3" />
+          <p id="HoldType" editor="I_TSTAT_PROG_MODE2" optional="T" />
+        </cmd>
         <cmd id="GV4">
           <p id="" editor="I_TSTAT_FANONTIME" init="GV4" />
         </cmd>
@@ -132,8 +139,20 @@
         <cmd id="GV9">
           <p id="" editor="I_ENABLED" init="GV9" />
         </cmd>
+        <cmd id="GV10">
+          <p id="" editor="I_BACKLIGHT" init="GV10" />
+        </cmd>
+        <cmd id="GV11">
+          <p id="" editor="I_BACKLIGHT" init="GV11" />
+        </cmd>
         <cmd id="GV17">
           <p id="" editor="I_ECO" init="GV17" />
+        </cmd>
+        <cmd id="BRT">
+          <p id="" editor="tempf" optional="T" />
+        </cmd>
+        <cmd id="DIM">
+          <p id="" editor="tempf" optional="T" />
         </cmd>
         <cmd id="QUERY" />
       </accepts>
