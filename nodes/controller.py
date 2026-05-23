@@ -21,7 +21,10 @@ from nodes.feature import FeatureNode
 from nodes.pool import PoolNode
 from nodes.pool_thermostat import PoolThermostatNode
 from nodes.dummy_thermostat import DummyThermostatNode
-from nodes.honeywell_lab_thermostat import HoneywellLabThermostatNode
+from nodes.honeywell_lab_thermostat import (
+    HoneywellLabThermostatNode,
+    HoneywellPentairThermostatNode,
+)
 from nodes.solar_heater import SolarHeaterNode
 from nodes.solar_thermostat import SolarThermostatNode
 from nodes.thermostat_lab_controller import ThermostatLabChildNode
@@ -125,7 +128,7 @@ class ControllerNode(udi_interface.Node):
             LOGGER.info(
                 "Normal Pentair mode: adding Honeywell-style thermostat specimen alongside pool nodes"
             )
-            self.pool_thermostat_node = HoneywellLabThermostatNode(
+            self.pool_thermostat_node = HoneywellPentairThermostatNode(
                 self.poly,
                 "thermostat_1",
                 "thermostat_1",
@@ -449,9 +452,19 @@ class ControllerNode(udi_interface.Node):
             return
 
         existing_name = getattr(existing, "name", "")
+        existing_id = getattr(existing, "id", "")
         if existing_name == "Thermostat Lab":
             LOGGER.info(
                 "Removing stale lab thermostat child so normal Pool Thermostat can be created"
+            )
+            self._remove_node_if_present("thermostat_1")
+            self.pool_thermostat_node = None
+            return
+
+        if existing_id and existing_id != "ThermostatF":
+            LOGGER.info(
+                "Replacing stale thermostat_1 node id=%s so normal Pool Thermostat can use ThermostatF",
+                existing_id,
             )
             self._remove_node_if_present("thermostat_1")
             self.pool_thermostat_node = None
