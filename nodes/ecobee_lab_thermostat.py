@@ -32,6 +32,7 @@ class EcobeeLabThermostatNode(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, primary, address, name)
         self.client = client
+        self.climd = 2
         self.clismd = 0
         self.gv1 = 45
         self.gv4 = 0
@@ -56,7 +57,7 @@ class EcobeeLabThermostatNode(udi_interface.Node):
         self.setDriver("ST", temp, force=True)
         self.setDriver("CLISPH", heat_sp, force=True)
         self.setDriver("CLISPC", cool_sp, force=True)
-        self.setDriver("CLIMD", 2, force=True)
+        self.setDriver("CLIMD", self.climd, force=True)
         self.setDriver("CLIFS", 0, force=True)
         self.setDriver("CLIHUM", 50, force=True)
         self.setDriver("CLIHCS", hcs, force=True)
@@ -90,7 +91,7 @@ class EcobeeLabThermostatNode(udi_interface.Node):
         self.refresh(command)
 
     def cmd_set_mode(self, command):
-        self._set_int("clismd", "CLIMD", command)
+        self._set_int("climd", "CLIMD", command)
 
     def cmd_set_schedule_mode(self, command):
         self._set_int("clismd", "CLISMD", command)
