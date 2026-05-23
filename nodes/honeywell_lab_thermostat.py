@@ -22,7 +22,19 @@ DRIVERS_MAP = {
         {"driver": "GV5", "value": 0, "uom": 2},
         {"driver": "GV6", "value": 1, "uom": 2},
         {"driver": "GV7", "value": 0, "uom": 110},
-    ]
+    ],
+    "ThermostatF": [
+        {"driver": "ST", "value": 70, "uom": 17},
+        {"driver": "CLISPH", "value": 65, "uom": 17},
+        {"driver": "CLISPC", "value": 75, "uom": 17},
+        {"driver": "CLIMD", "value": 2, "uom": 67},
+        {"driver": "CLIFS", "value": 0, "uom": 68},
+        {"driver": "CLIHUM", "value": 50, "uom": 22},
+        {"driver": "CLIHCS", "value": 0, "uom": 66},
+        {"driver": "CLIFRS", "value": 0, "uom": 80},
+        {"driver": "CLIFSO", "value": 0, "uom": 81},
+        {"driver": "BATLVL", "value": 100, "uom": 51},
+    ],
 }
 
 MODE_MAP = {
@@ -135,4 +147,63 @@ class HoneywellLabThermostatNode(udi_interface.Node):
         "CLIMD": cmdSetPF,
         "GV4": cmdSetHoldStatus,
         "CLIFS": cmdSetFS,
+    }
+
+
+class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
+    id = "ThermostatF"
+    hint = "0x010c0100"
+    drivers = DRIVERS_MAP["ThermostatF"]
+
+    def __init__(self, polyglot, primary, address, name, client):
+        super().__init__(polyglot, primary, address, name, client)
+        self.fan_override = 0
+        self.battery_level = 100
+
+    def refresh(self, command=None):
+        LOGGER.info("Refreshing Honeywell Pentair thermostat command=%s", command)
+        state = self.client.get_state()
+        temp = int(round(float(state.pool_temp_f)))
+        humidity = 50
+        running_state = 0
+        if state.heater_on:
+            running_state = RUNNING_STATE_MAP["Heat"]
+        elif state.pump_on and self.mode == MODE_MAP["Cool"]:
+            running_state = RUNNING_STATE_MAP["Cool"]
+        fan_state = 1 if state.pump_on else 0
+
+        updates = {
+            "ST": temp,
+            "CLISPH": self.heat_setpoint,
+            "CLISPC": self.cool_setpoint,
+            "CLIMD": self.mode,
+            "CLIFS": self.fan_mode,
+            "CLIHUM": humidity,
+            "CLIHCS": running_state,
+            "CLIFRS": fan_state,
+            "CLIFSO": self.fan_override,
+            "BATLVL": self.battery_level,
+        }
+
+        for key, value in updates.items():
+            self.setDriver(key, value, force=True)
+
+    def cmdSetFanOverride(self, command):
+        raw = command.get("value")
+        try:
+            self.fan_override = int(raw)
+        except (TypeError, ValueError):
+            LOGGER.warning(
+                "Ignoring invalid Honeywell Pentair fan override payload %s", raw
+            )
+            return
+        self.setDriver("CLIFSO", self.fan_override, force=True)
+
+    commands = {
+        "QUERY": refresh,
+        "CLISPH": HoneywellLabThermostatNode.cmdSetPF,
+        "CLISPC": HoneywellLabThermostatNode.cmdSetPF,
+        "CLIMD": HoneywellLabThermostatNode.cmdSetPF,
+        "CLIFS": HoneywellLabThermostatNode.cmdSetFS,
+        "CLIFSO": cmdSetFanOverride,
     }
