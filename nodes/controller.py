@@ -122,9 +122,12 @@ class ControllerNode(udi_interface.Node):
             )
             self.poly.addNode(self.pool_node)
         if self.pool_thermostat_node is None:
-            self.pool_thermostat_node = PoolThermostatNode(
+            LOGGER.info(
+                "Normal Pentair mode: adding Honeywell-style thermostat specimen alongside pool nodes"
+            )
+            self.pool_thermostat_node = HoneywellLabThermostatNode(
                 self.poly,
-                self.address,
+                "thermostat_1",
                 "thermostat_1",
                 "Pool Thermostat",
                 self.client,
@@ -237,27 +240,18 @@ class ControllerNode(udi_interface.Node):
                 refresh_topology,
             )
             if self.lab_thermostat_node is not None:
-                query = getattr(self.lab_thermostat_node, "query", None)
-                payload = {
-                    "reason": "thermostat_lab_refresh",
-                    "refresh_topology": refresh_topology,
-                }
-                if callable(query):
-                    LOGGER.info(
-                        "Thermostat lab mode invoking node.query() for likely Alexa/Portal refresh path address=%s payload=%s",
-                        self.lab_thermostat_node.address,
-                        payload,
-                    )
-                    query(payload)
-                else:
-                    self.lab_thermostat_node.refresh(payload)
+                self.lab_thermostat_node.refresh(
+                    {"reason": "thermostat_lab_refresh", "refresh_topology": refresh_topology}
+                )
             return
 
         state = self.client.get_state()
         if self.pool_node is not None:
             self.pool_node.update_from_state(state)
         if self.pool_thermostat_node is not None:
-            self.pool_thermostat_node.update_from_state(state)
+            self.pool_thermostat_node.refresh(
+                {"reason": "normal_mode_refresh", "refresh_topology": refresh_topology}
+            )
         self._refresh_pool_temp_experiments(state, discover=refresh_topology)
         if self.solar_node is not None:
             self.solar_node.update_from_state(state)
