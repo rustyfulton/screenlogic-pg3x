@@ -2,30 +2,24 @@ import udi_interface
 
 from nodes.experimental_pool_temp import (
     ExperimentalPoolTempDocCloneHintThermostatNode,
-    ExperimentalPoolTempPowerAlarmNode,
 )
 
 LOGGER = udi_interface.LOGGER
 
 
-class ThermostatLabControllerNode(ExperimentalPoolTempDocCloneHintThermostatNode):
+class NativeThermostatLabRootNode(ExperimentalPoolTempDocCloneHintThermostatNode):
+    id = "ThermostatF"
+    hint = "1.12.1.0"
+
+
+class ThermostatLabControllerNode(NativeThermostatLabRootNode):
     def __init__(self, polyglot, primary, address, name, client):
         super().__init__(polyglot, address, address, name, client)
-        self.alarm_node = None
 
     def start(self):
         LOGGER.info("Starting thermostat lab controller node as root thermostat")
         self._cleanup_stale_lab_nodes()
         self._ensure_name("Thermostat Lab")
-        if self.alarm_node is None:
-            self.alarm_node = ExperimentalPoolTempPowerAlarmNode(
-                self.poly,
-                self.address,
-                "controllera",
-                "Thermostat Lab Power Alarm",
-                self.client,
-            )
-            self.poly.addNode(self.alarm_node)
         self.refresh_children(refresh_topology=True)
 
     def _cleanup_stale_lab_nodes(self):
@@ -33,7 +27,7 @@ class ThermostatLabControllerNode(ExperimentalPoolTempDocCloneHintThermostatNode
         del_node = getattr(self.poly, "delNode", None)
         if not callable(get_node) or not callable(del_node):
             return
-        for address in ("labtstat", "labtstata"):
+        for address in ("controllera", "labtstat", "labtstata"):
             node = get_node(address)
             if node is None:
                 continue
@@ -70,8 +64,6 @@ class ThermostatLabControllerNode(ExperimentalPoolTempDocCloneHintThermostatNode
 
     def set_client(self, client, **_kwargs):
         self.client = client
-        if self.alarm_node is not None:
-            self.alarm_node.client = client
 
     def shortPoll(self):
         LOGGER.info("Thermostat lab shortPoll: refreshing root thermostat")
@@ -89,13 +81,6 @@ class ThermostatLabControllerNode(ExperimentalPoolTempDocCloneHintThermostatNode
         self.refresh(
             {"reason": "thermostat_lab_root_refresh", "refresh_topology": refresh_topology}
         )
-        if self.alarm_node is not None:
-            self.alarm_node.refresh(
-                {
-                    "reason": "thermostat_lab_root_refresh",
-                    "refresh_topology": refresh_topology,
-                }
-            )
 
     def refresh_topology(self):
         self.refresh_children(refresh_topology=True)
