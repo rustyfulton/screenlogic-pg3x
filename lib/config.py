@@ -205,7 +205,6 @@ class NodeServerConfig:
 
         isolated_thermostat_lab_mode = (
             enable_pool_temp_experiments
-            or not params
             or screenlogic_system_name == PLACEHOLDER_SCREENLOGIC_SYSTEM_NAME
         )
         if isolated_thermostat_lab_mode:
