@@ -32,7 +32,7 @@ Recommended example:
 mode=2
 screenlogic_host=192.168.1.99
 screenlogic_port=80
-screenlogic_system_name=Pentair: F1-11-11
+screenlogic_system_name=Pentair: 00-00-00
 screenlogic_password=
 ```
 
@@ -72,7 +72,7 @@ These are advanced overrides. The node server should run fine without them.
   - `true` keeps the fixed `Solar Heater` node visible.
   - Default is `true`.
 - `OPT_show_solar_thermostat`
-  - `true` keeps the fixed `Solar Thermostat` node visible.
+  - `true` keeps the fixed `Pool Thermostat` node visible.
   - Default is `true`.
 - `OPT_show_dummy_thermostat`
   - `true` keeps the standalone `Dummy Thermostat` node visible for profile

@@ -41,15 +41,15 @@ circuits as feature nodes.
 ## Alexa / ISY Portal Thermostat Enrollment
 
 There is currently one annoying but important manual step if you want ISY Portal
-to offer the pool solar thermostat as a thermostat for Amazon Echo / Alexa.
+to offer the pool thermostat as a thermostat for Amazon Echo / Alexa.
 
 1. Install the plugin and configure it normally.
 2. Confirm the thermostat is visible and working in native IoX / Admin Console
    usage first.
 3. In ISY Portal, open:
    `Select Tool -> Connectivity -> Device Hint Editor`
-4. Find the solar thermostat device. In practice this is the device ending with
-   `n*_solartstat` (shown as the Solar Thermostat node).
+4. Find the thermostat device. In practice this is the device ending with
+   `n*_solartstat` (shown as the Pool Thermostat node).
 5. Change its hint from:
    `0.0.0.0`
    to:

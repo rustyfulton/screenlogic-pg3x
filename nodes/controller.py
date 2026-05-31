@@ -150,7 +150,7 @@ class ControllerNode(udi_interface.Node):
                 self.poly,
                 self.address,
                 "solartstat",
-                "Solar Thermostat",
+                "Pool Thermostat",
                 self.client,
             )
             self.poly.addNode(self.solar_thermostat_node)
