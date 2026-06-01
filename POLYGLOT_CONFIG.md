@@ -38,6 +38,8 @@ screenlogic_password=
 
 <span style="color:#b45309"><strong>Recommendation:</strong> Leave `screenlogic_password` blank. Password support has not been proven to work reliably yet. It may also be worth confirming in the official ScreenLogic app that your system accepts blank-password local access.</span>
 
+<span style="color:#b45309"><strong>Troubleshooting:</strong> If the pool or thermostat nodes come up showing all-zero values, the node server is usually not talking to the real ScreenLogic system yet. Double-check `screenlogic_host` and `screenlogic_system_name` first.</span>
+
 ## Optional Parameters
 
 These are advanced overrides. The node server should run fine without them.

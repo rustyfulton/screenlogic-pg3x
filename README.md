@@ -62,6 +62,11 @@ to offer the pool thermostat as a thermostat for Amazon Echo / Alexa.
 If Portal or Alexa gets into a bad state, delete the device from Portal/Alexa,
 reinstall the node server into a fresh slot number, and try again.
 
+If the thermostat/pool nodes come up showing all zeros, treat that as a warning
+sign that the node server is not talking to the real ScreenLogic system yet.
+The most common causes are an incorrect `screenlogic_host` value or an incorrect
+Pentair system identifier in `screenlogic_system_name`.
+
 ## Admin Console NLS Placeholders
 
 If you see button or subtitle text like:

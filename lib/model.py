@@ -3,17 +3,17 @@ from dataclasses import dataclass
 
 @dataclass
 class PoolState:
-    connected: bool = True
-    pool_temp_f: int = 82
-    spa_temp_f: int = 99
+    connected: bool = False
+    pool_temp_f: int = 0
+    spa_temp_f: int = 0
     pump_on: bool = False
     heater_on: bool = False
-    pool_setpoint_f: int = 84
-    solar_enabled: bool = True
+    pool_setpoint_f: int = 0
+    solar_enabled: bool = False
     solar_active: bool = False
-    solar_setpoint_f: int = 86
-    solar_mode: int = 1
-    solar_cool_setpoint_f: int = 90
+    solar_setpoint_f: int = 0
+    solar_mode: int = 0
+    solar_cool_setpoint_f: int = 0
     solar_fan_mode: int = 0
 
 
