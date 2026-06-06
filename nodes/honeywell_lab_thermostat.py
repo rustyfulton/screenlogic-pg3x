@@ -164,6 +164,7 @@ class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
         LOGGER.info("Refreshing Honeywell Pentair thermostat command=%s", command)
         state = self.client.get_state()
         temp = int(round(float(state.pool_temp_f)))
+        self.heat_setpoint = int(round(float(state.pool_setpoint_f)))
         humidity = 50
         running_state = 0
         if state.heater_on:
@@ -188,6 +189,40 @@ class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
         for key, value in updates.items():
             self.setDriver(key, value, force=True)
 
+    def cmdSetPF(self, command):
+        driver = command.get("cmd")
+        raw = command.get("value")
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            LOGGER.warning(
+                "Ignoring invalid Honeywell Pentair payload %s=%s",
+                driver,
+                raw,
+            )
+            return
+
+        if driver == "CLISPH":
+            LOGGER.info(
+                "Honeywell Pentair thermostat command: set real pool heat setpoint to %s",
+                value,
+            )
+            state = self.client.set_pool_setpoint(value)
+            self.heat_setpoint = int(round(float(state.pool_setpoint_f)))
+            self.refresh(command)
+            return
+
+        if driver == "CLISPC":
+            LOGGER.info(
+                "Honeywell Pentair thermostat command: ignoring cool setpoint write %s for pool body",
+                value,
+            )
+            self.cool_setpoint = value
+        elif driver == "CLIMD":
+            self.mode = value
+
+        self.refresh(command)
+
     def cmdSetFanOverride(self, command):
         raw = command.get("value")
         try:
@@ -201,9 +236,9 @@ class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
 
     commands = {
         "QUERY": refresh,
-        "CLISPH": HoneywellLabThermostatNode.cmdSetPF,
-        "CLISPC": HoneywellLabThermostatNode.cmdSetPF,
-        "CLIMD": HoneywellLabThermostatNode.cmdSetPF,
+        "CLISPH": cmdSetPF,
+        "CLISPC": cmdSetPF,
+        "CLIMD": cmdSetPF,
         "CLIFS": HoneywellLabThermostatNode.cmdSetFS,
         "CLIFSO": cmdSetFanOverride,
     }
