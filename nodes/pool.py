@@ -39,9 +39,14 @@ class PoolNode(udi_interface.Node):
         self.update_from_state(self.client.set_heater(False))
 
     def cmd_set_pool_setpoint(self, command):
+        LOGGER.info("ScreenLogic pool setpoint payload: %s", command)
         raw = command.get("value")
         if raw in (None, ""):
             raw = command.get("GV4")
+        if raw in (None, ""):
+            raw = command.get("uom17")
+        if raw in (None, "") and isinstance(command.get("query"), dict):
+            raw = command["query"].get("GV4")
         LOGGER.info("ScreenLogic pool command: set pool setpoint to %s", raw)
         self.update_from_state(self.client.set_pool_setpoint(raw))
 

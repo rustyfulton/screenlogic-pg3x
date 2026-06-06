@@ -209,6 +209,14 @@ class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
             )
             state = self.client.set_pool_setpoint(value)
             self.heat_setpoint = int(round(float(state.pool_setpoint_f)))
+            get_node = getattr(self.poly, "getNode", None)
+            if callable(get_node):
+                pool_node = get_node("pool")
+                if pool_node is not None and hasattr(pool_node, "update_from_state"):
+                    LOGGER.info(
+                        "Honeywell Pentair thermostat command: syncing sibling Pool node after setpoint write"
+                    )
+                    pool_node.update_from_state(state)
             self.refresh(command)
             return
 
