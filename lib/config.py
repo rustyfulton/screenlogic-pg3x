@@ -52,7 +52,7 @@ class NodeServerConfig:
     sync_after_write: bool = True
     include_pool_node: bool = True
     include_dummy_thermostat: bool = False
-    include_solar_node: bool = True
+    include_pool_heater_node: bool = True
     include_pool_thermostat_node: bool = True
     include_spa_thermostat_node: bool = False
     feature_nodes_enabled: bool = True
@@ -162,12 +162,12 @@ class NodeServerConfig:
             _first_param(params, "OPT_show_pool_node", "show_pool_node"),
             default=True,
         )
-        include_solar_node = _normalize_bool(
+        include_pool_heater_node = _normalize_bool(
             _first_param(
                 params,
-                "OPT_show_solar_heater",
-                "show_solar_heater",
-                "include_solar_node",
+                "OPT_show_pool_heater",
+                "show_pool_heater",
+                "include_pool_heater_node",
             ),
             default=True,
         )
@@ -177,9 +177,6 @@ class NodeServerConfig:
                 "OPT_show_pool_thermostat",
                 "show_pool_thermostat",
                 "include_pool_thermostat_node",
-                "OPT_show_solar_thermostat",
-                "show_solar_thermostat",
-                "include_solar_thermostat_node",
             ),
             default=True,
         )
@@ -222,7 +219,7 @@ class NodeServerConfig:
             sync_after_write = True
             include_pool_node = False
             include_dummy_thermostat = True
-            include_solar_node = False
+            include_pool_heater_node = False
             include_pool_thermostat_node = False
             include_spa_thermostat_node = False
             feature_nodes_enabled = False
@@ -256,7 +253,7 @@ class NodeServerConfig:
             sync_after_write=sync_after_write,
             include_pool_node=include_pool_node,
             include_dummy_thermostat=include_dummy_thermostat,
-            include_solar_node=include_solar_node,
+            include_pool_heater_node=include_pool_heater_node,
             include_pool_thermostat_node=include_pool_thermostat_node,
             include_spa_thermostat_node=include_spa_thermostat_node,
             feature_nodes_enabled=feature_nodes_enabled,

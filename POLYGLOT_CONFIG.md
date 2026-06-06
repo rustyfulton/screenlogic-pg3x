@@ -70,14 +70,12 @@ These are advanced overrides. The node server should run fine without them.
 - `OPT_show_features`
   - `true` creates nodes for discovered ScreenLogic circuits/features.
   - Default is `true`.
-- `OPT_show_solar_heater`
-  - `true` keeps the fixed `Solar Heater` node visible.
+- `OPT_show_pool_heater`
+  - `true` keeps the fixed `Pool Heater` node visible.
   - Default is `true`.
 - `OPT_show_pool_thermostat`
   - `true` keeps the fixed `Pool Thermostat` node visible.
   - Default is `true`.
-  - Older builds used `OPT_show_solar_thermostat`; that legacy key is still
-    accepted as an alias during the transition.
 - `OPT_show_spa_thermostat`
   - Reserved feature gate for a future second thermostat bound to the spa body.
   - Default is `false`.
