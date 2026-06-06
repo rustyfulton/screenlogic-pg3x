@@ -31,6 +31,8 @@ class SolarHeaterNode(udi_interface.Node):
 
     def cmd_set_solar_setpoint(self, command):
         raw = command.get("value")
+        if raw in (None, ""):
+            raw = command.get("CLISPH")
         LOGGER.info("ScreenLogic solar command: set solar setpoint to %s", raw)
         self.update_from_state(self.client.set_solar_setpoint(raw))
 

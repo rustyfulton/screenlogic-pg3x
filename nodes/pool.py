@@ -40,6 +40,8 @@ class PoolNode(udi_interface.Node):
 
     def cmd_set_pool_setpoint(self, command):
         raw = command.get("value")
+        if raw in (None, ""):
+            raw = command.get("GV4")
         LOGGER.info("ScreenLogic pool command: set pool setpoint to %s", raw)
         self.update_from_state(self.client.set_pool_setpoint(raw))
 
