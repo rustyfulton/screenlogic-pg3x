@@ -50,7 +50,8 @@ class ScreenLogicNodeServer:
             startup_refresh=self.config.startup_refresh,
             poll_enabled=self.config.poll_enabled,
             include_solar_node=self.config.include_solar_node,
-            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
+            include_pool_thermostat_node=self.config.include_pool_thermostat_node,
+            include_spa_thermostat_node=self.config.include_spa_thermostat_node,
             feature_nodes_enabled=self.config.feature_nodes_enabled,
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
@@ -163,7 +164,7 @@ class ScreenLogicNodeServer:
         LOGGER.info(
             "Received custom params; mode=%s backend=%s host=%s port=%s system_name=%s "
             "auto_refresh=%s show_pool_node=%s show_features=%s "
-            "show_solar_heater=%s show_solar_thermostat=%s "
+            "show_solar_heater=%s show_pool_thermostat=%s show_spa_thermostat=%s "
             "fountain_experiments=%s pool_temp_experiments=%s thermostat_lab_mode=%s read_only=%s",
             self.config.mode,
             self.config.backend_mode,
@@ -174,7 +175,8 @@ class ScreenLogicNodeServer:
             self.config.include_pool_node,
             self.config.feature_nodes_enabled,
             self.config.include_solar_node,
-            self.config.include_solar_thermostat_node,
+            self.config.include_pool_thermostat_node,
+            self.config.include_spa_thermostat_node,
             self.config.enable_fountain_experiments,
             self.config.enable_pool_temp_experiments,
             self.config.isolated_thermostat_lab_mode,
@@ -253,7 +255,8 @@ class ScreenLogicNodeServer:
             startup_refresh=self.config.startup_refresh,
             poll_enabled=self.config.poll_enabled,
             include_solar_node=self.config.include_solar_node,
-            include_solar_thermostat_node=self.config.include_solar_thermostat_node,
+            include_pool_thermostat_node=self.config.include_pool_thermostat_node,
+            include_spa_thermostat_node=self.config.include_spa_thermostat_node,
             feature_nodes_enabled=self.config.feature_nodes_enabled,
             feature_include=self.config.feature_include,
             feature_exclude=self.config.feature_exclude,
@@ -330,7 +333,8 @@ class ScreenLogicNodeServer:
                     f"show_pool_node={self.config.include_pool_node} "
                     f"show_features={self.config.feature_nodes_enabled} "
                     f"show_solar_heater={self.config.include_solar_node} "
-                    f"show_solar_thermostat={self.config.include_solar_thermostat_node} "
+                    f"show_pool_thermostat={self.config.include_pool_thermostat_node} "
+                    f"show_spa_thermostat={self.config.include_spa_thermostat_node} "
                     f"fountain_experiments={self.config.enable_fountain_experiments} "
                     f"pool_temp_experiments={self.config.enable_pool_temp_experiments} "
                     f"thermostat_lab_mode={self.config.isolated_thermostat_lab_mode} "
@@ -377,6 +381,7 @@ class ScreenLogicNodeServer:
         if len(profile.feature_names) > 6:
             features += f", +{len(profile.feature_names) - 6} more"
         lights = len(profile.light_names)
+        spa_gate = "enabled" if self.config.include_spa_thermostat_node else "disabled"
 
         self._add_notice(
             {
@@ -396,7 +401,8 @@ class ScreenLogicNodeServer:
                     f"solar={profile.has_solar} cooling={profile.has_cooling} "
                     f"chlorinator={profile.has_chlorinator} chemistry={profile.has_chemistry} "
                     f"hybrid_heater={profile.has_hybrid_heater} "
-                    f"intelliflo_pumps={profile.intelliflo_pump_count} lights={lights}"
+                    f"intelliflo_pumps={profile.intelliflo_pump_count} lights={lights} "
+                    f"spa_thermostat_gate={spa_gate}"
                 )
             }
         )

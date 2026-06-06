@@ -73,9 +73,16 @@ These are advanced overrides. The node server should run fine without them.
 - `OPT_show_solar_heater`
   - `true` keeps the fixed `Solar Heater` node visible.
   - Default is `true`.
-- `OPT_show_solar_thermostat`
+- `OPT_show_pool_thermostat`
   - `true` keeps the fixed `Pool Thermostat` node visible.
   - Default is `true`.
+  - Older builds used `OPT_show_solar_thermostat`; that legacy key is still
+    accepted as an alias during the transition.
+- `OPT_show_spa_thermostat`
+  - Reserved feature gate for a future second thermostat bound to the spa body.
+  - Default is `false`.
+  - Current builds do not create a live spa thermostat yet; this flag exists so
+    we can enable that path deliberately once backend support is finished.
 - `OPT_show_dummy_thermostat`
   - `true` keeps the standalone `Dummy Thermostat` node visible for profile
     experiments.

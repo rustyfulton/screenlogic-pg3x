@@ -49,7 +49,7 @@ to offer the pool thermostat as a thermostat for Amazon Echo / Alexa.
 3. In ISY Portal, open:
    `Select Tool -> Connectivity -> Device Hint Editor`
 4. Find the thermostat device. In practice this is the device ending with
-   `n*_solartstat` (shown as the Pool Thermostat node).
+   `n*_thermostat_1` (shown as the Pool Thermostat node).
 5. Change its hint from:
    `0.0.0.0`
    to:
@@ -66,6 +66,10 @@ If the thermostat/pool nodes come up showing all zeros, treat that as a warning
 sign that the node server is not talking to the real ScreenLogic system yet.
 The most common causes are an incorrect `screenlogic_host` value or an incorrect
 Pentair system identifier in `screenlogic_system_name`.
+
+There is also a reserved `OPT_show_spa_thermostat` configuration flag for a
+future second thermostat bound to the spa body. It defaults to `false` because
+current live writes still target the pool body only.
 
 ## Admin Console NLS Placeholders
 

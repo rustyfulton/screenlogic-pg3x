@@ -26,7 +26,6 @@ from nodes.honeywell_lab_thermostat import (
     HoneywellPentairThermostatNode,
 )
 from nodes.solar_heater import SolarHeaterNode
-from nodes.solar_thermostat import SolarThermostatNode
 from nodes.thermostat_lab_controller import ThermostatLabChildNode
 
 LOGGER = udi_interface.LOGGER
@@ -54,7 +53,8 @@ class ControllerNode(udi_interface.Node):
         startup_refresh=True,
         poll_enabled=True,
         include_solar_node=True,
-        include_solar_thermostat_node=True,
+        include_pool_thermostat_node=True,
+        include_spa_thermostat_node=False,
         feature_nodes_enabled=True,
         feature_include=(),
         feature_exclude=(),
@@ -69,7 +69,8 @@ class ControllerNode(udi_interface.Node):
         self.startup_refresh = startup_refresh
         self.poll_enabled = poll_enabled
         self.include_solar_node = include_solar_node
-        self.include_solar_thermostat_node = include_solar_thermostat_node
+        self.include_pool_thermostat_node = include_pool_thermostat_node
+        self.include_spa_thermostat_node = include_spa_thermostat_node
         self.feature_nodes_enabled = feature_nodes_enabled
         self.feature_include = tuple(feature_include or ())
         self.feature_exclude = tuple(feature_exclude or ())
@@ -78,7 +79,6 @@ class ControllerNode(udi_interface.Node):
         self.isolated_thermostat_lab_mode = isolated_thermostat_lab_mode
         self.pool_node = None
         self.solar_node = None
-        self.solar_thermostat_node = None
         self.pool_thermostat_node = None
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
@@ -124,9 +124,12 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.pool_node)
-        if self.pool_thermostat_node is None:
+        if not self.include_pool_thermostat_node:
+            self._remove_node_if_present("thermostat_1")
+            self.pool_thermostat_node = None
+        elif self.pool_thermostat_node is None:
             LOGGER.info(
-                "Normal Pentair mode: adding Honeywell-style thermostat specimen alongside pool nodes"
+                "Normal Pentair mode: adding Honeywell-style Pool Thermostat node"
             )
             self.pool_thermostat_node = HoneywellPentairThermostatNode(
                 self.poly,
@@ -145,15 +148,7 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.solar_node)
-        if self.include_solar_thermostat_node and self.solar_thermostat_node is None:
-            self.solar_thermostat_node = SolarThermostatNode(
-                self.poly,
-                self.address,
-                "solartstat",
-                "Pool Thermostat",
-                self.client,
-            )
-            self.poly.addNode(self.solar_thermostat_node)
+        self._remove_stale_secondary_thermostat_node()
         if self.include_dummy_thermostat and self.dummy_thermostat_node is None:
             self.dummy_thermostat_node = DummyThermostatNode(
                 self.poly,
@@ -171,7 +166,8 @@ class ControllerNode(udi_interface.Node):
         startup_refresh=None,
         poll_enabled=None,
         include_solar_node=None,
-        include_solar_thermostat_node=None,
+        include_pool_thermostat_node=None,
+        include_spa_thermostat_node=None,
         feature_nodes_enabled=None,
         feature_include=None,
         feature_exclude=None,
@@ -190,8 +186,10 @@ class ControllerNode(udi_interface.Node):
             self.poll_enabled = poll_enabled
         if include_solar_node is not None:
             self.include_solar_node = include_solar_node
-        if include_solar_thermostat_node is not None:
-            self.include_solar_thermostat_node = include_solar_thermostat_node
+        if include_pool_thermostat_node is not None:
+            self.include_pool_thermostat_node = include_pool_thermostat_node
+        if include_spa_thermostat_node is not None:
+            self.include_spa_thermostat_node = include_spa_thermostat_node
         if feature_nodes_enabled is not None:
             self.feature_nodes_enabled = feature_nodes_enabled
         if feature_include is not None:
@@ -209,8 +207,6 @@ class ControllerNode(udi_interface.Node):
             self.pool_node.client = client
         if self.solar_node is not None:
             self.solar_node.client = client
-        if self.solar_thermostat_node is not None:
-            self.solar_thermostat_node.client = client
         if self.pool_thermostat_node is not None:
             self.pool_thermostat_node.client = client
         for node in self.feature_nodes.values():
@@ -258,8 +254,6 @@ class ControllerNode(udi_interface.Node):
         self._refresh_pool_temp_experiments(state, discover=refresh_topology)
         if self.solar_node is not None:
             self.solar_node.update_from_state(state)
-        if self.solar_thermostat_node is not None:
-            self.solar_thermostat_node.update_from_state(state)
         if self.dummy_thermostat_node is not None:
             self.dummy_thermostat_node.refresh()
         self.refresh_features(discover=refresh_topology)
@@ -417,7 +411,6 @@ class ControllerNode(udi_interface.Node):
             self._remove_node_if_present(address)
         self.pool_node = None
         self.solar_node = None
-        self.solar_thermostat_node = None
         self.pool_thermostat_node = None
 
         self._remove_node_if_present("labtstat")
@@ -468,6 +461,20 @@ class ControllerNode(udi_interface.Node):
             )
             self._remove_node_if_present("thermostat_1")
             self.pool_thermostat_node = None
+
+    def _remove_stale_secondary_thermostat_node(self):
+        get_node = getattr(self.poly, "getNode", None)
+        if not callable(get_node):
+            return
+
+        existing = get_node("solartstat")
+        if existing is None:
+            return
+
+        LOGGER.info(
+            "Removing retired secondary thermostat node address=solartstat so normal mode exposes only one Pool Thermostat"
+        )
+        self._remove_node_if_present("solartstat")
 
     def _refresh_pool_temp_experiments(self, state, *, discover=False):
         if not self.enable_pool_temp_experiments:

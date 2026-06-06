@@ -53,7 +53,8 @@ class NodeServerConfig:
     include_pool_node: bool = True
     include_dummy_thermostat: bool = False
     include_solar_node: bool = True
-    include_solar_thermostat_node: bool = True
+    include_pool_thermostat_node: bool = True
+    include_spa_thermostat_node: bool = False
     feature_nodes_enabled: bool = True
     feature_include: tuple[str, ...] = ()
     feature_exclude: tuple[str, ...] = ()
@@ -170,14 +171,26 @@ class NodeServerConfig:
             ),
             default=True,
         )
-        include_solar_thermostat_node = _normalize_bool(
+        include_pool_thermostat_node = _normalize_bool(
             _first_param(
                 params,
+                "OPT_show_pool_thermostat",
+                "show_pool_thermostat",
+                "include_pool_thermostat_node",
                 "OPT_show_solar_thermostat",
                 "show_solar_thermostat",
                 "include_solar_thermostat_node",
             ),
             default=True,
+        )
+        include_spa_thermostat_node = _normalize_bool(
+            _first_param(
+                params,
+                "OPT_show_spa_thermostat",
+                "show_spa_thermostat",
+                "include_spa_thermostat_node",
+            ),
+            default=False,
         )
         feature_nodes_enabled = _normalize_bool(
             _first_param(
@@ -210,7 +223,8 @@ class NodeServerConfig:
             include_pool_node = False
             include_dummy_thermostat = True
             include_solar_node = False
-            include_solar_thermostat_node = False
+            include_pool_thermostat_node = False
+            include_spa_thermostat_node = False
             feature_nodes_enabled = False
             enable_pool_temp_experiments = False
 
@@ -243,7 +257,8 @@ class NodeServerConfig:
             include_pool_node=include_pool_node,
             include_dummy_thermostat=include_dummy_thermostat,
             include_solar_node=include_solar_node,
-            include_solar_thermostat_node=include_solar_thermostat_node,
+            include_pool_thermostat_node=include_pool_thermostat_node,
+            include_spa_thermostat_node=include_spa_thermostat_node,
             feature_nodes_enabled=feature_nodes_enabled,
             feature_include=_normalize_csv(
                 _first_param(
