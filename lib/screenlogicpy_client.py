@@ -126,6 +126,11 @@ class ScreenLogicPyClient(ScreenLogicClient):
 
     def set_pool_setpoint(self, value: int) -> PoolState:
         setpoint = int(value)
+        LOGGER.info(
+            "ScreenLogic pool setpoint write requested: body=0 target=%s current_cached=%s",
+            setpoint,
+            self.state.pool_setpoint_f,
+        )
         return self._enqueue_write(
             write_key="body:0:heat_temp",
             description=f"set pool heat setpoint {setpoint}",
@@ -500,6 +505,26 @@ class ScreenLogicPyClient(ScreenLogicClient):
                     self._equipment_profile = self._build_equipment_profile(self._last_data)
                     self.state.connected = True
                     self._log_state_digest(self._last_data)
+                    if command.write_key == "body:0:heat_temp":
+                        requested_text = command.description.rsplit(" ", 1)[-1]
+                        try:
+                            requested_setpoint = int(requested_text)
+                        except ValueError:
+                            requested_setpoint = None
+                        LOGGER.info(
+                            "ScreenLogic pool setpoint write result: requested=%s observed=%s",
+                            requested_setpoint if requested_setpoint is not None else requested_text,
+                            self.state.pool_setpoint_f,
+                        )
+                        if (
+                            requested_setpoint is not None
+                            and self.state.pool_setpoint_f != requested_setpoint
+                        ):
+                            LOGGER.warning(
+                                "ScreenLogic pool setpoint write did not stick immediately: requested=%s observed=%s",
+                                requested_setpoint,
+                                self.state.pool_setpoint_f,
+                            )
                     LOGGER.info("ScreenLogic command completed: %s", command.description)
                     result = self.state
             except Exception as exc:
