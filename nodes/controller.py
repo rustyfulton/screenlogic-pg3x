@@ -52,7 +52,7 @@ class ControllerNode(udi_interface.Node):
         include_dummy_thermostat=True,
         startup_refresh=True,
         poll_enabled=True,
-        include_solar_node=True,
+        include_pool_heater_node=True,
         include_pool_thermostat_node=True,
         include_spa_thermostat_node=False,
         feature_nodes_enabled=True,
@@ -68,7 +68,7 @@ class ControllerNode(udi_interface.Node):
         self.include_dummy_thermostat = include_dummy_thermostat
         self.startup_refresh = startup_refresh
         self.poll_enabled = poll_enabled
-        self.include_solar_node = include_solar_node
+        self.include_pool_heater_node = include_pool_heater_node
         self.include_pool_thermostat_node = include_pool_thermostat_node
         self.include_spa_thermostat_node = include_spa_thermostat_node
         self.feature_nodes_enabled = feature_nodes_enabled
@@ -139,12 +139,12 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.pool_thermostat_node)
-        if self.include_solar_node and self.solar_node is None:
+        if self.include_pool_heater_node and self.solar_node is None:
             self.solar_node = SolarHeaterNode(
                 self.poly,
                 self.address,
                 "solar",
-                "Solar Heater",
+                "Pool Heater",
                 self.client,
             )
             self.poly.addNode(self.solar_node)
@@ -165,7 +165,7 @@ class ControllerNode(udi_interface.Node):
         include_dummy_thermostat=None,
         startup_refresh=None,
         poll_enabled=None,
-        include_solar_node=None,
+        include_pool_heater_node=None,
         include_pool_thermostat_node=None,
         include_spa_thermostat_node=None,
         feature_nodes_enabled=None,
@@ -184,8 +184,8 @@ class ControllerNode(udi_interface.Node):
             self.startup_refresh = startup_refresh
         if poll_enabled is not None:
             self.poll_enabled = poll_enabled
-        if include_solar_node is not None:
-            self.include_solar_node = include_solar_node
+        if include_pool_heater_node is not None:
+            self.include_pool_heater_node = include_pool_heater_node
         if include_pool_thermostat_node is not None:
             self.include_pool_thermostat_node = include_pool_thermostat_node
         if include_spa_thermostat_node is not None:

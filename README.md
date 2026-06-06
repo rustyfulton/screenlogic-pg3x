@@ -5,7 +5,7 @@ This repository contains a PG3x node server for Universal Devices eisy/IoX.
 Current capabilities:
 
 - PG3x-style installable project structure
-- controller, pool, solar heater, thermostat-style, and dynamic feature nodes
+- controller, pool, pool-heater, thermostat-style, and dynamic feature nodes
 - fake backend for safe simulation
 - live ScreenLogic backend through `screenlogicpy`
 - discovered ScreenLogic circuit/feature nodes with on/off commands
