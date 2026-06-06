@@ -27,6 +27,10 @@ class ScreenLogicClient(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def set_spa_setpoint(self, value: int) -> PoolState:
+        raise NotImplementedError
+
+    @abstractmethod
     def set_solar_enabled(self, enabled: bool) -> PoolState:
         raise NotImplementedError
 
@@ -40,6 +44,10 @@ class ScreenLogicClient(ABC):
 
     @abstractmethod
     def set_solar_mode(self, value: int) -> PoolState:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_spa_mode(self, value: int) -> PoolState:
         raise NotImplementedError
 
     @abstractmethod

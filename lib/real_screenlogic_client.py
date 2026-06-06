@@ -132,6 +132,10 @@ class RealScreenLogicClient(ScreenLogicClient):
         self._ensure_write_allowed()
         return self.state
 
+    def set_spa_setpoint(self, value: int) -> PoolState:
+        self._ensure_write_allowed()
+        return self.state
+
     def set_solar_enabled(self, enabled: bool) -> PoolState:
         self._ensure_write_allowed()
         return self.state
@@ -148,6 +152,10 @@ class RealScreenLogicClient(ScreenLogicClient):
         self._ensure_write_allowed()
         return self.state
 
+    def set_spa_mode(self, value: int) -> PoolState:
+        self._ensure_write_allowed()
+        return self.state
+
     def set_solar_fan_mode(self, value: int) -> PoolState:
         self._ensure_write_allowed()
         return self.state
@@ -161,14 +169,17 @@ class RealScreenLogicClient(ScreenLogicClient):
         self.state.pool_temp_f = pool.current_temp_f or self.state.pool_temp_f
         self.state.spa_temp_f = spa.current_temp_f or self.state.spa_temp_f
         self.state.pool_setpoint_f = pool.set_point_f or self.state.pool_setpoint_f
+        self.state.spa_setpoint_f = spa.set_point_f or self.state.spa_setpoint_f
         self.state.solar_setpoint_f = pool.set_point_f or self.state.solar_setpoint_f
         self.state.solar_cool_setpoint_f = (
             pool.cool_set_point_f or self.state.solar_cool_setpoint_f
         )
         self.state.pump_on = equipment.pool_circuit_on or equipment.spa_circuit_on
         self.state.heater_on = equipment.pool_heater_on
+        self.state.spa_heater_on = spa.heat_mode != 0
         self.state.solar_active = equipment.solar_active
         self.state.solar_mode = self._map_heat_mode(pool.heat_mode, flags)
+        self.state.spa_mode = self._map_heat_mode(spa.heat_mode, flags)
         self.state.solar_enabled = self.state.solar_mode != 0
 
     def _select_discovered_unit(self) -> LocalUnitConnection | None:

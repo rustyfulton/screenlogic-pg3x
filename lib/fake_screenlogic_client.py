@@ -51,6 +51,10 @@ class FakeScreenLogicClient(ScreenLogicClient):
         self.state.pool_setpoint_f = max(40, min(104, int(value)))
         return self.state
 
+    def set_spa_setpoint(self, value: int) -> PoolState:
+        self.state.spa_setpoint_f = max(40, min(104, int(value)))
+        return self.state
+
     def set_solar_enabled(self, enabled: bool) -> PoolState:
         self.state.solar_enabled = enabled
         self.state.solar_mode = 1 if enabled else 0
@@ -72,6 +76,11 @@ class FakeScreenLogicClient(ScreenLogicClient):
         self.state.solar_enabled = mode != 0
         if not self.state.solar_enabled:
             self.state.solar_active = False
+        return self.state
+
+    def set_spa_mode(self, value: int) -> PoolState:
+        self.state.spa_mode = int(value)
+        self.state.spa_heater_on = self.state.spa_mode != 0
         return self.state
 
     def set_solar_fan_mode(self, value: int) -> PoolState:

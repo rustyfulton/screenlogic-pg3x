@@ -76,6 +76,42 @@
     </cmds>
   </nodeDef>
 
+  <nodeDef id="SpaThermostatF" nls="SpaThermostatF">
+    <sts>
+      <st id="ST" editor="_17_1" />
+      <st id="CLIMD" editor="I_TSTAT_MODE" />
+      <st id="CLISPC" editor="_17_1" />
+      <st id="CLISPH" editor="_17_1" />
+      <st id="CLIHCS" editor="I_TSTAT_HCS" />
+      <st id="CLIFS" editor="I_TSTAT_FAN_MODE" />
+      <st id="CLIFRS" editor="I_TSTAT_FAN_STATE" />
+      <st id="CLIFSO" editor="I_TSTAT_FAN_OVERRIDE" />
+      <st id="CLIHUM" editor="_22_1" />
+      <st id="BATLVL" editor="I_BAT_PCT" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="CLISPH">
+          <p id="" editor="_17_1" init="CLISPH" />
+        </cmd>
+        <cmd id="CLISPC">
+          <p id="" editor="_17_1" init="CLISPC" />
+        </cmd>
+        <cmd id="CLIMD">
+          <p id="" editor="I_TSTAT_MODE" init="CLIMD" />
+        </cmd>
+        <cmd id="CLIFS">
+          <p id="" editor="I_TSTAT_FAN_MODE" init="CLIFS" />
+        </cmd>
+        <cmd id="CLIFSO">
+          <p id="" editor="I_TSTAT_FAN_OVERRIDE" init="CLIFSO" />
+        </cmd>
+        <cmd id="QUERY" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+
   <nodeDef id="ThermostatLabF" nodeType="140" nls="140E">
     <sts>
       <st id="ST" editor="I_TEMP_F" />

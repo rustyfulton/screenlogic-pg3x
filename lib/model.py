@@ -8,11 +8,14 @@ class PoolState:
     spa_temp_f: int = 0
     pump_on: bool = False
     heater_on: bool = False
+    spa_heater_on: bool = False
     pool_setpoint_f: int = 0
+    spa_setpoint_f: int = 0
     solar_enabled: bool = False
     solar_active: bool = False
     solar_setpoint_f: int = 0
     solar_mode: int = 0
+    spa_mode: int = 0
     solar_cool_setpoint_f: int = 0
     solar_fan_mode: int = 0
 

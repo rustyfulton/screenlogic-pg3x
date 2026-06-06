@@ -77,10 +77,9 @@ These are advanced overrides. The node server should run fine without them.
   - `true` keeps the fixed `Pool Thermostat` node visible.
   - Default is `true`.
 - `OPT_show_spa_thermostat`
-  - Reserved feature gate for a future second thermostat bound to the spa body.
+  - Creates a separate `Spa Thermostat` when the system actually reports a spa body.
   - Default is `false`.
-  - Current builds do not create a live spa thermostat yet; this flag exists so
-    we can enable that path deliberately once backend support is finished.
+  - If the pool controller does not report a spa body, no spa thermostat node is created.
 - `OPT_show_dummy_thermostat`
   - `true` keeps the standalone `Dummy Thermostat` node visible for profile
     experiments.

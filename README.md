@@ -68,8 +68,9 @@ The most common causes are an incorrect `screenlogic_host` value or an incorrect
 Pentair system identifier in `screenlogic_system_name`.
 
 There is also a reserved `OPT_show_spa_thermostat` configuration flag for a
-future second thermostat bound to the spa body. It defaults to `false` because
-current live writes still target the pool body only.
+second thermostat bound to the spa body. It defaults to `false`, and the node
+is only created when the ScreenLogic equipment profile actually reports a spa
+body.
 
 ## Admin Console NLS Placeholders
 

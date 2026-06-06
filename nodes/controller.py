@@ -24,6 +24,7 @@ from nodes.dummy_thermostat import DummyThermostatNode
 from nodes.honeywell_lab_thermostat import (
     HoneywellLabThermostatNode,
     HoneywellPentairThermostatNode,
+    SpaPentairThermostatNode,
 )
 from nodes.solar_heater import SolarHeaterNode
 from nodes.thermostat_lab_controller import ThermostatLabChildNode
@@ -80,6 +81,7 @@ class ControllerNode(udi_interface.Node):
         self.pool_node = None
         self.solar_node = None
         self.pool_thermostat_node = None
+        self.spa_thermostat_node = None
         self.dummy_thermostat_node = None
         self.feature_nodes = {}
         self.experimental_pool_temp_nodes = {}
@@ -94,6 +96,7 @@ class ControllerNode(udi_interface.Node):
         self.ensure_children()
         if self.startup_refresh:
             self.client.connect()
+            self.ensure_children()
             self.refresh_children(refresh_topology=True)
 
     def ensure_children(self):
@@ -139,6 +142,22 @@ class ControllerNode(udi_interface.Node):
                 self.client,
             )
             self.poly.addNode(self.pool_thermostat_node)
+        if self._should_show_spa_thermostat():
+            if self.spa_thermostat_node is None:
+                LOGGER.info(
+                    "Normal Pentair mode: adding Honeywell-style Spa Thermostat node"
+                )
+                self.spa_thermostat_node = SpaPentairThermostatNode(
+                    self.poly,
+                    "spa_thermostat_1",
+                    "spa_thermostat_1",
+                    "Spa Thermostat",
+                    self.client,
+                )
+                self.poly.addNode(self.spa_thermostat_node)
+        else:
+            self._remove_node_if_present("spa_thermostat_1")
+            self.spa_thermostat_node = None
         if self.include_pool_heater_node and self.solar_node is None:
             self.solar_node = SolarHeaterNode(
                 self.poly,
@@ -209,6 +228,8 @@ class ControllerNode(udi_interface.Node):
             self.solar_node.client = client
         if self.pool_thermostat_node is not None:
             self.pool_thermostat_node.client = client
+        if self.spa_thermostat_node is not None:
+            self.spa_thermostat_node.client = client
         for node in self.feature_nodes.values():
             node.client = client
         for node in self.experimental_pool_temp_nodes.values():
@@ -249,6 +270,10 @@ class ControllerNode(udi_interface.Node):
             self.pool_node.update_from_state(state)
         if self.pool_thermostat_node is not None:
             self.pool_thermostat_node.refresh(
+                {"reason": "normal_mode_refresh", "refresh_topology": refresh_topology}
+            )
+        if self.spa_thermostat_node is not None:
+            self.spa_thermostat_node.refresh(
                 {"reason": "normal_mode_refresh", "refresh_topology": refresh_topology}
             )
         self._refresh_pool_temp_experiments(state, discover=refresh_topology)
@@ -407,11 +432,12 @@ class ControllerNode(udi_interface.Node):
             self._remove_node_if_present(address)
         self.feature_nodes.clear()
 
-        for address in ("pool", "solar", "solartstat", "thermostat_1"):
+        for address in ("pool", "solar", "solartstat", "thermostat_1", "spa_thermostat_1"):
             self._remove_node_if_present(address)
         self.pool_node = None
         self.solar_node = None
         self.pool_thermostat_node = None
+        self.spa_thermostat_node = None
 
         self._remove_node_if_present("labtstat")
         self._remove_node_if_present("labtstata")
@@ -475,6 +501,17 @@ class ControllerNode(udi_interface.Node):
             "Removing retired secondary thermostat node address=solartstat so normal mode exposes only one Pool Thermostat"
         )
         self._remove_node_if_present("solartstat")
+
+    def _should_show_spa_thermostat(self):
+        if not self.include_spa_thermostat_node:
+            return False
+        get_profile = getattr(self.client, "get_equipment_profile", None)
+        if not callable(get_profile):
+            return False
+        profile = get_profile()
+        if profile is None:
+            return False
+        return any(str(name).strip().lower() == "spa" for name in profile.body_names)
 
     def _refresh_pool_temp_experiments(self, state, *, discover=False):
         if not self.enable_pool_temp_experiments:

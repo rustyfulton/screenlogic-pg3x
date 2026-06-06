@@ -250,3 +250,81 @@ class HoneywellPentairThermostatNode(HoneywellLabThermostatNode):
         "CLIFS": HoneywellLabThermostatNode.cmdSetFS,
         "CLIFSO": cmdSetFanOverride,
     }
+
+
+class SpaPentairThermostatNode(HoneywellPentairThermostatNode):
+    id = "SpaThermostatF"
+    hint = "0x010c0100"
+    drivers = DRIVERS_MAP["ThermostatF"]
+
+    def refresh(self, command=None):
+        LOGGER.info("Refreshing Honeywell Pentair spa thermostat command=%s", command)
+        state = self.client.get_state()
+        temp = int(round(float(state.spa_temp_f)))
+        self.heat_setpoint = int(round(float(state.spa_setpoint_f)))
+        humidity = 50
+        running_state = RUNNING_STATE_MAP["Heat"] if state.spa_heater_on else 0
+        fan_state = 1 if state.pump_on else 0
+
+        updates = {
+            "ST": temp,
+            "CLISPH": self.heat_setpoint,
+            "CLISPC": self.cool_setpoint,
+            "CLIMD": state.spa_mode,
+            "CLIFS": self.fan_mode,
+            "CLIHUM": humidity,
+            "CLIHCS": running_state,
+            "CLIFRS": fan_state,
+            "CLIFSO": self.fan_override,
+            "BATLVL": self.battery_level,
+        }
+
+        for key, value in updates.items():
+            self.setDriver(key, value, force=True)
+
+    def cmdSetPF(self, command):
+        driver = command.get("cmd")
+        raw = command.get("value")
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            LOGGER.warning(
+                "Ignoring invalid Honeywell Pentair spa payload %s=%s",
+                driver,
+                raw,
+            )
+            return
+
+        if driver == "CLISPH":
+            LOGGER.info(
+                "Honeywell Pentair spa thermostat command: set real spa heat setpoint to %s",
+                value,
+            )
+            state = self.client.set_spa_setpoint(value)
+            self.heat_setpoint = int(round(float(state.spa_setpoint_f)))
+            self.refresh(command)
+            return
+
+        if driver == "CLISPC":
+            LOGGER.info(
+                "Honeywell Pentair spa thermostat command: ignoring cool setpoint write %s for spa body",
+                value,
+            )
+            self.cool_setpoint = value
+        elif driver == "CLIMD":
+            LOGGER.info(
+                "Honeywell Pentair spa thermostat command: set real spa heat mode to %s",
+                value,
+            )
+            self.client.set_spa_mode(value)
+
+        self.refresh(command)
+
+    commands = {
+        "QUERY": refresh,
+        "CLISPH": cmdSetPF,
+        "CLISPC": cmdSetPF,
+        "CLIMD": cmdSetPF,
+        "CLIFS": HoneywellLabThermostatNode.cmdSetFS,
+        "CLIFSO": HoneywellPentairThermostatNode.cmdSetFanOverride,
+    }

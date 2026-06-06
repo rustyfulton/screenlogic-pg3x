@@ -138,6 +138,20 @@ class ScreenLogicPyClient(ScreenLogicClient):
             update_before=True,
         )
 
+    def set_spa_setpoint(self, value: int) -> PoolState:
+        setpoint = int(value)
+        LOGGER.info(
+            "ScreenLogic spa setpoint write requested: body=1 target=%s current_cached=%s",
+            setpoint,
+            self.state.spa_setpoint_f,
+        )
+        return self._enqueue_write(
+            write_key="body:1:heat_temp",
+            description=f"set spa heat setpoint {setpoint}",
+            operation=lambda gateway: gateway.async_set_heat_temp(1, setpoint),
+            update_before=True,
+        )
+
     def set_solar_enabled(self, enabled: bool) -> PoolState:
         return self.set_solar_mode(1 if enabled else 0)
 
@@ -158,6 +172,15 @@ class ScreenLogicPyClient(ScreenLogicClient):
             write_key="body:0:heat_mode",
             description=f"set pool heat mode {mode}",
             operation=lambda gateway: gateway.async_set_heat_mode(0, mode),
+            update_before=True,
+        )
+
+    def set_spa_mode(self, value: int) -> PoolState:
+        mode = int(value)
+        return self._enqueue_write(
+            write_key="body:1:heat_mode",
+            description=f"set spa heat mode {mode}",
+            operation=lambda gateway: gateway.async_set_heat_mode(1, mode),
             update_before=True,
         )
 
@@ -317,9 +340,12 @@ class ScreenLogicPyClient(ScreenLogicClient):
         pool_temp = self._nested_value(pool_body, "last_temperature")
         spa_temp = self._nested_value(spa_body, "last_temperature")
         heat_setpoint = self._nested_value(pool_body, "heat_setpoint")
+        spa_heat_setpoint = self._nested_value(spa_body, "heat_setpoint")
         cool_setpoint = self._nested_value(pool_body, "cool_setpoint")
         heat_mode = self._nested_value(pool_body, "heat_mode")
+        spa_heat_mode = self._nested_value(spa_body, "heat_mode")
         heat_state = self._nested_value(pool_body, "heat_state")
+        spa_heat_state = self._nested_value(spa_body, "heat_state")
         air_temp = self._nested_value(controller_sensor, "air_temperature")
         equipment_flags = int(controller_equipment.get("flags", 0) or 0)
 
@@ -330,13 +356,18 @@ class ScreenLogicPyClient(ScreenLogicClient):
         if heat_setpoint is not None:
             self.state.pool_setpoint_f = int(heat_setpoint)
             self.state.solar_setpoint_f = int(heat_setpoint)
+        if spa_heat_setpoint is not None:
+            self.state.spa_setpoint_f = int(spa_heat_setpoint)
         if cool_setpoint is not None:
             self.state.solar_cool_setpoint_f = int(cool_setpoint)
 
         mapped_mode = self._map_heat_mode(int(heat_mode or 0), equipment_flags)
+        mapped_spa_mode = self._map_heat_mode(int(spa_heat_mode or 0), equipment_flags)
         self.state.solar_mode = mapped_mode
+        self.state.spa_mode = mapped_spa_mode
         self.state.solar_enabled = mapped_mode in (1, 2)
         self.state.heater_on = int(heat_state or 0) in (2, 3)
+        self.state.spa_heater_on = int(spa_heat_state or 0) in (1, 2, 3)
         self.state.solar_active = int(heat_state or 0) in (1, 3)
         self.state.pump_on = self._infer_pump_on(pumps, circuits)
 
